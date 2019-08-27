@@ -221,6 +221,7 @@ int main(int argc, char** argv)
   move_group.move();
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
 
+  visual_tools.prompt("Attempting plan 1, Press Next to continue");
 
   // Planning to a Pose goal
   // ^^^^^^^^^^^^^^^^^^^^^^^
@@ -276,13 +277,13 @@ int main(int argc, char** argv)
     }
   }
 
-  visual_tools.prompt("Press Next to continue");
   move_group.move();
 
   success = false;
   trials = 0;
 
   // Move down in Z axis
+  visual_tools.prompt("Attempting plan 2, Press Next to continue");
 
   while (trials++ < MAX_TRIALS)
   {
@@ -320,7 +321,6 @@ int main(int argc, char** argv)
     }
   }
 
-  visual_tools.prompt("Press Next to continue");
   move_group.move();
 
 
