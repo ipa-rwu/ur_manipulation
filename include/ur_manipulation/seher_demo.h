@@ -15,20 +15,27 @@
 #include <moveit_msgs/CollisionObject.h>
 
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <geometry_msgs/PoseStamped.h>
 
 class SeherDemo
 {
-
 public:
-  SeherDemo() {};
-  ~SeherDemo() {};
+  SeherDemo(); // No {} required here since defenition is in source file, but if not defined there, add {} here to make this declaration+definition
+  ~SeherDemo(); // Same as above
 
   const std::string GROUP_MANIP = "manipulator";
   const std::string GROUP_GRIPP = "endeffector";
 
-  void printBasicInfo();
+  int max_trials;
+  bool user_prompts;
 
+  void addCollissionObjects();
+  void checkTrialsLimit(int trials);
   void initialiseMoveit();
+  bool moveGroupExecute(int trials);
+  void moveToNamedTarget(std::string target);
+  moveit::planning_interface::MoveGroupInterface::Plan planToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
+  void printBasicInfo();
 
 
 private:
