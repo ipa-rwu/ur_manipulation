@@ -1,6 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-
- <node name="pick_n_place" pkg="ur_manipulation" type="pick_n_place" respawn="false" output="screen"/>
-
-</launch>

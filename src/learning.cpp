@@ -49,7 +49,7 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "pick_n_place");
+  ros::init(argc, argv, "learning");
   ros::NodeHandle node_handle;
   ros::AsyncSpinner spinner(1);
   spinner.start();
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   visual_tools.loadRemoteControl();
 
   // RViz provides many types of markers, in this demo we will use text, cylinders, and spheres
-  Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
+  Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
   text_pose.translation().z() = 1.75;
   visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
 
@@ -101,10 +101,15 @@ int main(int argc, char** argv)
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
   //
   // We can print the name of the reference frame for this robot.
-  ROS_INFO_NAMED("tutorial", "Reference frame: %s", move_group.getPlanningFrame().c_str());
+  ROS_INFO_NAMED("tutorial", "Planning frame: %s", move_group.getPlanningFrame().c_str());
 
   // We can also print the name of the end-effector link for this group.
   ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
+
+  // We can get a list of all the groups in the robot:
+    ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
+    std::copy(move_group.getJointModelGroupNames().begin(), move_group.getJointModelGroupNames().end(),
+              std::ostream_iterator<std::string>(std::cout, ", "));
 
 
   // ADDING COLLISSION OBJECTS OF WORLD
@@ -197,8 +202,6 @@ int main(int argc, char** argv)
 
   collision_objects.push_back(object);
 
-
-
   // Now, let's add the collision object into the world
   ROS_INFO_NAMED("tutorial", "Add an object into the world");
   planning_scene_interface.addCollisionObjects(collision_objects);
@@ -261,7 +264,7 @@ int main(int argc, char** argv)
     visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
     visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
     visual_tools.trigger();
-    ROS_INFO("Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED" );
+    ROS_INFO("Plan Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED" );
     if (success)
     {
       ROS_INFO_STREAM("Succeeded plan, continuing to execute");
@@ -277,11 +280,29 @@ int main(int argc, char** argv)
     }
   }
 
-  move_group.move();
-
-  success = false;
+  bool exec_succeed = false;
   trials = 0;
 
+  while (trials++ < MAX_TRIALS)
+  {
+    exec_succeed = (move_group.move()==moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED" );
+    if (exec_succeed)
+    {
+      ROS_INFO_STREAM("Execution succeeded");
+      break;
+    }
+    else if (trials < MAX_TRIALS)
+    {
+      ROS_WARN_STREAM("Execution failed, reattempting");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Execution failed, consider quitting");
+    }
+  }
+  success = false;
+  trials = 0;
   // Move down in Z axis
   visual_tools.prompt("Attempting plan 2, Press Next to continue");
 
@@ -321,7 +342,27 @@ int main(int argc, char** argv)
     }
   }
 
-  move_group.move();
+  exec_succeed = false;
+  trials = 0;
+
+  while (trials++ < MAX_TRIALS)
+  {
+    exec_succeed = (move_group.move()==moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED" );
+    if (exec_succeed)
+    {
+      ROS_INFO_STREAM("Execution succeeded");
+      break;
+    }
+    else if (trials < MAX_TRIALS)
+    {
+      ROS_WARN_STREAM("Execution failed, reattempting");
+    }
+    else
+    {
+      ROS_ERROR_STREAM("Execution failed, consider quitting");
+    }
+  }
 
 
 

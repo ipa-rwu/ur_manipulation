@@ -39,6 +39,7 @@ catkin_package(
     interactivity_utils
   INCLUDE_DIRS
     ${THIS_PACKAGE_INCLUDE_DIRS}
+    include
   CATKIN_DEPENDS
     moveit_core
     moveit_visual_tools
@@ -48,6 +49,9 @@ catkin_package(
     EIGEN3
 )
 
+include_directories(
+  include ${catkin_INCLUDE_DIRS}
+)
 ###########
 ## Build ##
 ###########
@@ -62,6 +66,9 @@ target_link_libraries(move_group_interface_tutorial_ur ${catkin_LIBRARIES} ${Boo
 install(TARGETS move_group_interface_tutorial_ur DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
-add_executable(pick_n_place src/pick_n_place.cpp)
-target_link_libraries(pick_n_place ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-install(TARGETS pick_n_place DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+add_executable(learning src/learning.cpp)
+target_link_libraries(learning ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS learning DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+add_executable(seher_demo src/seher_demo.cpp)
+target_link_libraries(seher_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})

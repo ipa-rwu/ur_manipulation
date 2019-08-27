@@ -47,7 +47,7 @@
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "move_group_interface_tutorial_ur");
+  ros::init(argc, argv, "move_group_interface_tutorial");
   ros::NodeHandle node_handle;
   ros::AsyncSpinner spinner(1);
   spinner.start();
@@ -57,12 +57,12 @@ int main(int argc, char** argv)
   // Setup
   // ^^^^^
   //
-  // MoveIt! operates on sets of joints called "planning groups" and stores them in an object called
-  // the `JointModelGroup`. Throughout MoveIt! the terms "planning group" and "joint model group"
+  // MoveIt operates on sets of joints called "planning groups" and stores them in an object called
+  // the `JointModelGroup`. Throughout MoveIt the terms "planning group" and "joint model group"
   // are used interchangably.
-  static const std::string PLANNING_GROUP = "manipulator";
+  static const std::string PLANNING_GROUP = "panda_arm";
 
-  // The :move_group_interface:`MoveGroup` class can be easily
+  // The :move_group_interface:`MoveGroupInterface` class can be easily
   // setup using just the name of the planning group you would like to control and plan for.
   moveit::planning_interface::MoveGroupInterface move_group(PLANNING_GROUP);
 
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   // The package MoveItVisualTools provides many capabilties for visualizing objects, robots,
   // and trajectories in RViz as well as debugging tools such as step-by-step introspection of a script
   namespace rvt = rviz_visual_tools;
-  moveit_visual_tools::MoveItVisualTools visual_tools("base_link");
+  moveit_visual_tools::MoveItVisualTools visual_tools("panda_link0");
   visual_tools.deleteAllMarkers();
 
   // Remote control is an introspection tool that allows users to step through a high level script
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   visual_tools.loadRemoteControl();
 
   // RViz provides many types of markers, in this demo we will use text, cylinders, and spheres
-  Eigen::Affine3d text_pose = Eigen::Affine3d::Identity();
+  Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
   text_pose.translation().z() = 1.75;
   visual_tools.publishText(text_pose, "MoveGroupInterface Demo", rvt::WHITE, rvt::XLARGE);
 
@@ -99,10 +99,15 @@ int main(int argc, char** argv)
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
   //
   // We can print the name of the reference frame for this robot.
-  ROS_INFO_NAMED("tutorial", "Reference frame: %s", move_group.getPlanningFrame().c_str());
+  ROS_INFO_NAMED("tutorial", "Planning frame: %s", move_group.getPlanningFrame().c_str());
 
   // We can also print the name of the end-effector link for this group.
   ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
+
+  // We can get a list of all the groups in the robot:
+  ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
+  std::copy(move_group.getJointModelGroupNames().begin(), move_group.getJointModelGroupNames().end(),
+            std::ostream_iterator<std::string>(std::cout, ", "));
 
   // Start the demo
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -150,7 +155,7 @@ int main(int argc, char** argv)
   // and report success on execution of a trajectory.
 
   /* Uncomment below line when working with a real robot */
-//  move_group.move();
+  /* move_group.move(); */
 
   // Planning to a joint-space goal
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -187,8 +192,8 @@ int main(int argc, char** argv)
   // Let's specify a path constraint and a pose goal for our group.
   // First define the path constraint.
   moveit_msgs::OrientationConstraint ocm;
-  ocm.link_name = "ee_link";
-  ocm.header.frame_id = "base_link";
+  ocm.link_name = "panda_link7";
+  ocm.header.frame_id = "panda_link0";
   ocm.orientation.w = 1.0;
   ocm.absolute_x_axis_tolerance = 0.1;
   ocm.absolute_y_axis_tolerance = 0.1;
@@ -236,19 +241,16 @@ int main(int argc, char** argv)
   // When done with the path constraint be sure to clear it.
   move_group.clearPathConstraints();
 
-  // Since we set the start state we have to clear it before planning other paths
-  move_group.setStartStateToCurrentState();
-
   // Cartesian Paths
   // ^^^^^^^^^^^^^^^
   // You can plan a Cartesian path directly by specifying a list of waypoints
   // for the end-effector to go through. Note that we are starting
   // from the new start state above.  The initial pose (start state) does not
   // need to be added to the waypoint list but adding it can help with visualizations
-  geometry_msgs::Pose target_pose3 = move_group.getCurrentPose().pose;
-
   std::vector<geometry_msgs::Pose> waypoints;
-  waypoints.push_back(target_pose3);
+  waypoints.push_back(start_pose2);
+
+  geometry_msgs::Pose target_pose3 = start_pose2;
 
   target_pose3.position.z -= 0.2;
   waypoints.push_back(target_pose3);  // down
