@@ -4,7 +4,6 @@
 //Includes
 #include "ros/ros.h"
 
-
 #include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/planning_scene_interface/planning_scene_interface.h>
 
@@ -15,6 +14,7 @@
 #include <moveit_msgs/CollisionObject.h>
 
 #include <moveit_visual_tools/moveit_visual_tools.h>
+
 #include <geometry_msgs/PoseStamped.h>
 
 class SeherDemo
@@ -45,9 +45,6 @@ private:
   const robot_state::JointModelGroup* joint_model_group ;
   moveit_visual_tools::MoveItVisualTools *visual_tools;
   Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
-
-
-
 };
 
 

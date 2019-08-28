@@ -1,7 +1,9 @@
 /// TODO:
-/// 1. Wrap moveToNamedPose in multiple trials as well
-/// 2. Incorporate gripper functionality
-/// 3. Try with moveit pick and place interface instead
+/// [] Wrap moveToNamedPose in multiple trials as well
+/// [] Try to merge plan and execute functions (and hence number of trial loops)
+/// [] Incorporate gripper functionality
+/// [] Try with moveit pick and place interface instead
+///
 
 
 #include "ur_manipulation/seher_demo.h"
@@ -76,15 +78,15 @@ void SeherDemo::addCollissionObjects()
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
-  primitive.dimensions[0] = 1.47;
-  primitive.dimensions[1] = 0.97;
+  primitive.dimensions[0] = 0.97;
+  primitive.dimensions[1] = 1.47;
   primitive.dimensions[2] = 0;
 
   // Define a pose for the box (specified relative to frame_id)
   geometry_msgs::Pose box_pose;
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0.460; //  Base is ofset by -(0.1470/2-.275)
-  box_pose.position.y = 0;
+  box_pose.position.x = 0;
+  box_pose.position.y = 0.460; //  Base is ofset by -(0.1470/2-.275)
   box_pose.position.z = -0.01;
 
   object.primitives.push_back(primitive);
@@ -98,14 +100,14 @@ void SeherDemo::addCollissionObjects()
   object.id = "Left Wall";
 
   // Define a box to add to the world.
-  primitive.dimensions[0] = 1.47;
-  primitive.dimensions[1] = 0;
+  primitive.dimensions[0] = 0;
+  primitive.dimensions[1] = 1.47;
   primitive.dimensions[2] = 1.1;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0.460;
-  box_pose.position.y = 0.485;
+  box_pose.position.x = 0.485;
+  box_pose.position.y = 0.460;
   box_pose.position.z = 0.55;
 
   object.primitives.push_back(primitive);
@@ -118,14 +120,14 @@ void SeherDemo::addCollissionObjects()
   object.id = "Right Wall";
 
   // Define a box to add to the world.
-  primitive.dimensions[0] = 1.47;
-  primitive.dimensions[1] = 0;
+  primitive.dimensions[0] = 0;
+  primitive.dimensions[1] = 1.47;
   primitive.dimensions[2] = 1.1;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0.460;
-  box_pose.position.y = -0.485;
+  box_pose.position.x = -0.485;
+  box_pose.position.y = 0.460;
   box_pose.position.z = 0.55;
 
   object.primitives.push_back(primitive);
@@ -138,14 +140,14 @@ void SeherDemo::addCollissionObjects()
   object.id = "Back Wall";
 
   // Define a box to add to the world.
-  primitive.dimensions[0] = 0;
-  primitive.dimensions[1] = 0.97;
+  primitive.dimensions[0] = 0.97;
+  primitive.dimensions[1] = 0;
   primitive.dimensions[2] = 1.1;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.y = 0;
-  box_pose.position.x = -0.275;
+  box_pose.position.y = -0.275;
+  box_pose.position.x = 0;
   box_pose.position.z = 0.55;
 
   object.primitives.push_back(primitive);
@@ -286,7 +288,7 @@ int main(int argc, char **argv)
 
   // Place
 
-  target_pose1.position.y = -0.25;
+  target_pose1.position.x = -0.25;
 
   seher_obj.planToPoseTarget(target_pose1,3,"pre place pose");
   seher_obj.moveGroupExecute();
