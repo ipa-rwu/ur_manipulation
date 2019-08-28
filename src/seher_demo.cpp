@@ -37,31 +37,9 @@ void SeherDemo::printBasicInfo()
 
 }
 
-bool SeherDemo::moveGroupExecute(int trials=3)
+bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
-  checkTrialsLimit(trials);
-  bool exec_succeed = false;
-  int trial=0;
-
-  while (trial++ < trials)
-  {
-    exec_succeed = (move_group->move()==moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    ROS_INFO("Execution Attemp %d of %d : %s", trial, trials, exec_succeed ? "SUCCESS" : "FAILED" );
-    if (exec_succeed)
-    {
-      ROS_INFO_STREAM("Execution succeeded");
-      break;
-    }
-    else if (trials < max_trials)
-    {
-      ROS_WARN_STREAM("Execution failed, reattempting");
-    }
-    else
-    {
-      ROS_ERROR_STREAM("Execution failed, consider quitting");
-    }
-  }
-  return exec_succeed;
+  return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;
 }
 
 
@@ -203,7 +181,7 @@ void SeherDemo::moveToNamedTarget(std::string target)
   move_group->move();
 }
 
-moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::planToPoseTarget(geometry_msgs::Pose target_pose, int trials=3, std::string display_name="target pose")
+moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials=3, std::string display_name="target pose")
 {
   namespace rvt = rviz_visual_tools;
   checkTrialsLimit(trials);
@@ -271,37 +249,25 @@ int main(int argc, char **argv)
   target_pose1.orientation.z = 0;
   target_pose1.orientation.w = 1.0;
 
-
-  seher_obj.planToPoseTarget(target_pose1,3,"pre pick pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pre pick pose"));
 
   target_pose1.position.z -= 0.2;
-
-  seher_obj.planToPoseTarget(target_pose1,3,"pick pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pick pose"));
 
   target_pose1.position.z += 0.2;
-
-  seher_obj.planToPoseTarget(target_pose1,3,"post pick pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"post pick pose"));
 
 
   // Place
 
   target_pose1.position.x = -0.25;
-
-  seher_obj.planToPoseTarget(target_pose1,3,"pre place pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pre place pose"));
 
   target_pose1.position.z -= 0.2;
-
-  seher_obj.planToPoseTarget(target_pose1,3,"place pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"place pose"));
 
   target_pose1.position.z += 0.2;
-
-  seher_obj.planToPoseTarget(target_pose1,3,"post place pose");
-  seher_obj.moveGroupExecute();
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"post place pose"));
 
 
 

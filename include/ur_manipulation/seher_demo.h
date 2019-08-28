@@ -32,9 +32,9 @@ public:
   void addCollissionObjects();
   void checkTrialsLimit(int trials);
   void initialiseMoveit();
-  bool moveGroupExecute(int trials);
+  bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
-  moveit::planning_interface::MoveGroupInterface::Plan planToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
+  moveit::planning_interface::MoveGroupInterface::Plan getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
   void printBasicInfo();
 
 
