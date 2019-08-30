@@ -124,8 +124,8 @@ void SeherDemo::addCollissionObjects()
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.y = -0.275;
   box_pose.position.x = 0;
+  box_pose.position.y = -0.275;
   box_pose.position.z = 0.55;
 
   object.primitives.push_back(primitive);

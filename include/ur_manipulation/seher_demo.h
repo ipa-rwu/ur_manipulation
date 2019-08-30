@@ -20,8 +20,8 @@
 class SeherDemo
 {
 public:
-  SeherDemo(); // No {} required here since defenition is in source file, but if not defined there, add {} here to make this declaration+definition
-  ~SeherDemo(); // Same as above
+  SeherDemo();
+  ~SeherDemo();
 
   const std::string GROUP_MANIP = "manipulator";
   const std::string GROUP_GRIPP = "endeffector";
