@@ -253,8 +253,7 @@ int main(int argc, char **argv)
 
   //Pick
 
-
-  geometry_msgs::Pose target_pose1 = seher_obj.move_group->getCurrentPose().pose;
+  geometry_msgs::Pose target_pose1;
 
   target_pose1.position.x = 0.3;
   target_pose1.position.y = 0.4;
