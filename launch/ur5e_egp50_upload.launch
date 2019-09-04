@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="limited" default="false" doc="If true, limits joint range [-PI, PI] on all joints." />
-  
-  <param unless="$(arg limited)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur_manipulation)/urdf/ur5e_robot_egp50.urdf.xacro'" />
+  <arg name="kinematics_config" default="$(find ur_e_description)/config/ur5e_default.yaml"/>
+
+  <param unless="$(arg limited)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur_manipulation)/urdf/ur5e_robot_egp50.urdf.xacro' kinematics_config:=$(arg kinematics_config)" />
   <param if="$(arg limited)" name="robot_description" command="$(find xacro)/xacro --inorder '$(find ur_manipulation)/urdf/ur5e_joint_limited_robot_egp50.urdf.xacro'" />
 </launch>
