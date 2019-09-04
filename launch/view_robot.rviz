@@ -83,6 +83,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        egp_50_tip:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         forearm_link:
           Alpha: 1
           Show Axes: false
@@ -137,9 +141,11 @@ Visualization Manager:
         base_link:
           Value: false
         ee_link:
-          Value: true
-        egp50_base_link:
           Value: false
+        egp50_base_link:
+          Value: true
+        egp_50_tip:
+          Value: true
         forearm_link:
           Value: false
         shoulder_link:
@@ -174,7 +180,8 @@ Visualization Manager:
                       wrist_3_link:
                         ee_link:
                           egp50_base_link:
-                            {}
+                            egp_50_tip:
+                              {}
                         tool0:
                           {}
       Update Interval: 0
@@ -203,7 +210,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.817091703414917
+      Distance: 1.6899752616882324
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -218,10 +225,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.17539791762828827
+      Pitch: 0.12539789080619812
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.21039941906929016
+      Yaw: 0.3153993487358093
     Saved: ~
 Window Geometry:
   Displays:
@@ -240,4 +247,4 @@ Window Geometry:
     collapsed: false
   Width: 1280
   X: 60
-  Y: 60
+  Y: 30

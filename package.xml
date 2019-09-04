@@ -26,6 +26,8 @@
     <build_depend>tf2_eigen</build_depend>
     <build_depend>tf2_geometry_msgs</build_depend>
     <build_depend>geometric_msgs</build_depend>
+    <build_depend>tf</build_depend>
+    <build_depend>tf_conversions</build_depend>
 
     <run_depend>panda_moveit_config</run_depend>
     <run_depend>pluginlib</run_depend>
@@ -44,6 +46,9 @@
     <run_depend>tf2_eigen</run_depend>
     <run_depend>tf2_geometry_msgs</run_depend>
     <run_depend>geometry_msgs</run_depend>
+    <run_depend>tf</run_depend>
+    <run_depend>tf_conversions</run_depend>
+
 
 
 

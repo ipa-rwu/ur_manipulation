@@ -7,6 +7,19 @@
 
 
 #include "ur_manipulation/seher_demo.h"
+#include "tf/transform_datatypes.h"
+#include <angles/angles.h>
+
+
+void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll,double& pitch, double& yaw)
+{
+  tf::Quaternion quat;
+  tf::quaternionMsgToTF(orientation,quat);
+  quat.normalize();
+  tf::Matrix3x3 mat(quat);
+  mat.getRPY(roll, pitch,yaw);
+}
+
 
 SeherDemo::SeherDemo()  :
   max_trials(5),
@@ -210,7 +223,7 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTar
       ROS_INFO_STREAM("Succeeded plan, continuing to execute");
       break;
     }
-    else if (trials < max_trials)
+    else if (trial < max_trials)
     {
       ROS_WARN_STREAM("Planning failed, reattempting");
     }
@@ -240,34 +253,37 @@ int main(int argc, char **argv)
 
   //Pick
 
-  geometry_msgs::Pose target_pose1;
-  target_pose1.position.x = 0.25;
-  target_pose1.position.y = 0.25;
-  target_pose1.position.z = 0.25;
-  target_pose1.orientation.x = 0;
-  target_pose1.orientation.y = 0;
-  target_pose1.orientation.z = 0;
-  target_pose1.orientation.w = 1.0;
 
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pre pick pose"));
+  geometry_msgs::Pose target_pose1 = seher_obj.move_group->getCurrentPose().pose;
 
-  target_pose1.position.z -= 0.2;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pick pose"));
+  target_pose1.position.x = 0.3;
+  target_pose1.position.y = 0.4;
+  target_pose1.position.z = 0.15;
+  geometry_msgs::Quaternion quat_msg;
+  tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
+  target_pose1.orientation = quat_msg;
 
-  target_pose1.position.z += 0.2;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"post pick pose"));
+  int trials = 5;
+
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre pick pose"));
+
+  target_pose1.position.z -= 0.1;
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pick pose"));
+
+  target_pose1.position.z += 0.1;
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post pick pose"));
 
 
   // Place
 
   target_pose1.position.x = -0.25;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"pre place pose"));
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre place pose"));
 
-  target_pose1.position.z -= 0.2;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"place pose"));
+  target_pose1.position.z -= 0.1;
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"place pose"));
 
-  target_pose1.position.z += 0.2;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,3,"post place pose"));
+  target_pose1.position.z += 0.1;
+  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post place pose"));
 
 
 

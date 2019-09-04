@@ -60,7 +60,7 @@ int main(int argc, char** argv)
   // MoveIt operates on sets of joints called "planning groups" and stores them in an object called
   // the `JointModelGroup`. Throughout MoveIt the terms "planning group" and "joint model group"
   // are used interchangably.
-  static const std::string PLANNING_GROUP = "panda_arm";
+  static const std::string PLANNING_GROUP = "manipulator";
 
   // The :move_group_interface:`MoveGroupInterface` class can be easily
   // setup using just the name of the planning group you would like to control and plan for.
@@ -80,7 +80,7 @@ int main(int argc, char** argv)
   // The package MoveItVisualTools provides many capabilties for visualizing objects, robots,
   // and trajectories in RViz as well as debugging tools such as step-by-step introspection of a script
   namespace rvt = rviz_visual_tools;
-  moveit_visual_tools::MoveItVisualTools visual_tools("panda_link0");
+  moveit_visual_tools::MoveItVisualTools visual_tools("base_link");
   visual_tools.deleteAllMarkers();
 
   // Remote control is an introspection tool that allows users to step through a high level script
@@ -156,6 +156,7 @@ int main(int argc, char** argv)
 
   /* Uncomment below line when working with a real robot */
   /* move_group.move(); */
+    move_group.execute(my_plan);
 
   // Planning to a joint-space goal
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -177,7 +178,7 @@ int main(int argc, char** argv)
 
   success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   ROS_INFO_NAMED("tutorial", "Visualizing plan 2 (joint space goal) %s", success ? "" : "FAILED");
-
+  move_group.execute(my_plan);
   // Visualize the plan in RViz
   visual_tools.deleteAllMarkers();
   visual_tools.publishText(text_pose, "Joint Space Goal", rvt::WHITE, rvt::XLARGE);
@@ -192,8 +193,8 @@ int main(int argc, char** argv)
   // Let's specify a path constraint and a pose goal for our group.
   // First define the path constraint.
   moveit_msgs::OrientationConstraint ocm;
-  ocm.link_name = "panda_link7";
-  ocm.header.frame_id = "panda_link0";
+  ocm.link_name = "wrist_3_joint";
+  ocm.header.frame_id = "base_link";
   ocm.orientation.w = 1.0;
   ocm.absolute_x_axis_tolerance = 0.1;
   ocm.absolute_y_axis_tolerance = 0.1;
@@ -228,7 +229,7 @@ int main(int argc, char** argv)
 
   success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   ROS_INFO_NAMED("tutorial", "Visualizing plan 3 (constraints) %s", success ? "" : "FAILED");
-
+  move_group.execute(my_plan);
   // Visualize the plan in RViz
   visual_tools.deleteAllMarkers();
   visual_tools.publishAxisLabeled(start_pose2, "start");
@@ -342,7 +343,7 @@ int main(int argc, char** argv)
 
   success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
   ROS_INFO_NAMED("tutorial", "Visualizing plan 5 (pose goal move around cuboid) %s", success ? "" : "FAILED");
-
+  move_group.execute(my_plan);
   // Visualize the plan in RViz
   visual_tools.deleteAllMarkers();
   visual_tools.publishText(text_pose, "Obstacle Goal", rvt::WHITE, rvt::XLARGE);
