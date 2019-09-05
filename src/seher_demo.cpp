@@ -78,7 +78,7 @@ void SeherDemo::addCollissionObjects()
   box_pose.orientation.w = 1.0;
   box_pose.position.x = 0;
   box_pose.position.y = 0.460; //  Base is ofset by -(0.1470/2-.275)
-  box_pose.position.z = -0.01;
+  box_pose.position.z = -0.001;
 
   object.primitives.push_back(primitive);
   object.primitive_poses.push_back(box_pose);
@@ -184,7 +184,8 @@ void SeherDemo::moveToNamedTarget(std::string target)
 {
   if (user_prompts)
   {
-    visual_tools->prompt("Moving to starting pose up, press Next to continue");
+    std::string display_text = "Moving to named target : " + target + ", press Next to begin";
+    visual_tools->prompt(display_text);
   }
 
   move_group->setNamedTarget(target);
@@ -203,7 +204,7 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTar
 
   if(user_prompts)
   {
-    std::string message = "Attempting planning for " + display_name + ", press Next to continue";
+    std::string message = "Attempting planning for " + display_name + ", press Next to begin";
     visual_tools->prompt(message);
   }
 
@@ -249,7 +250,7 @@ int main(int argc, char **argv)
   seher_obj.initialiseMoveit();
   seher_obj.printBasicInfo();
   seher_obj.addCollissionObjects();
-  seher_obj.moveToNamedTarget("up");
+  seher_obj.moveToNamedTarget("home");
 
   //Pick
 
