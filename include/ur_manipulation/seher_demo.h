@@ -17,6 +17,8 @@
 
 #include <geometry_msgs/PoseStamped.h>
 
+#include "ur_msgs/SetIO.h"
+
 class SeherDemo
 {
 public:
@@ -31,6 +33,8 @@ public:
 
   void addCollissionObjects();
   void checkTrialsLimit(int trials);
+  bool gripperClose(ros::NodeHandle nh);
+  bool gripperOpen(ros::NodeHandle nh);
   void initialiseMoveit();
   bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
@@ -45,6 +49,7 @@ private:
   const robot_state::JointModelGroup* joint_model_group ;
   moveit_visual_tools::MoveItVisualTools *visual_tools;
   Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
+  const int IO_SERVICE_FUN_LEVEL_ = 1;   // Not exactly sure what this is, but 1 seems to work. If it fails, try 2.
 };
 
 

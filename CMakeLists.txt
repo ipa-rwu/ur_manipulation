@@ -28,6 +28,7 @@ find_package(catkin REQUIRED
     geometry_msgs
     tf
     tf_conversions
+    ur_msgs
 )
 
 find_package(Boost REQUIRED system filesystem date_time thread)

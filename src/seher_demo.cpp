@@ -1,7 +1,7 @@
 /// TODO:
 /// [] Wrap moveToNamedPose in multiple trials as well
-/// [] Try to merge plan and execute functions (and hence number of trial loops)
-/// [] Incorporate gripper functionality
+/// [x] Try to merge plan and execute functions (and hence number of trial loops)
+/// [x] Incorporate gripper functionality
 /// [] Try with moveit pick and place interface instead
 ///
 
@@ -52,6 +52,13 @@ void SeherDemo::printBasicInfo()
 
 bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
+
+  if(user_prompts)
+  {
+    std::string message = "Planning completed, press Next to execute";
+    visual_tools->prompt(message);
+  }
+
   return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;
 }
 
@@ -165,6 +172,68 @@ void SeherDemo::checkTrialsLimit(int trials)
   }
 }
 
+bool SeherDemo::gripperOpen(ros::NodeHandle nh)
+{
+  ur_msgs::SetIO io_msg;
+  io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
+  io_msg.request.pin = static_cast<int8_t>(0);
+  io_msg.request.state = 1;
+  ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
+
+  if(client.call(io_msg))
+  {
+    ROS_INFO_STREAM("Open gripper initialise : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+    sleep(1);
+    io_msg.request.state = 0;
+    if(client.call(io_msg))
+    {
+      ROS_INFO_STREAM("Open gripper conclude : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+      return true;
+    }
+    else
+    {
+      ROS_INFO_STREAM("Open gripper conclude : Failed");
+      return false;
+    }
+  }
+  else
+  {
+    ROS_INFO_STREAM("Open gripper initialise : Failed");
+    return false;
+  }
+}
+
+bool SeherDemo::gripperClose(ros::NodeHandle nh)
+{
+  ur_msgs::SetIO io_msg;
+  io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
+  io_msg.request.pin = static_cast<int8_t>(1);
+  io_msg.request.state = 1;
+  ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
+
+  if(client.call(io_msg))
+  {
+    ROS_INFO_STREAM("Close gripper initialise :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+    sleep(1);
+    io_msg.request.state = 0;
+    if(client.call(io_msg))
+    {
+      ROS_INFO_STREAM("Close gripper conclude :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+      return true;
+    }
+    else
+    {
+      ROS_INFO_STREAM("Close gripper conclude : Failed");
+      return false;
+    }
+  }
+  else
+  {
+    ROS_INFO_STREAM("Close gripper initialise : Failed");
+    return false;
+  }
+}
+
 void SeherDemo::initialiseMoveit()
 {
   namespace rvt = rviz_visual_tools;
@@ -182,16 +251,34 @@ void SeherDemo::initialiseMoveit()
 
 void SeherDemo::moveToNamedTarget(std::string target)
 {
+
+  move_group->setNamedTarget(target);
+
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+
+  int trials = 0;
+  while (trials++ < max_trials)
+  {
+    if(move_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
+    {
+      break;
+    }
+    else
+    {
+     ROS_ERROR_STREAM("Named target planning failed, consider quitting");
+    }
+  }
+
+  ROS_INFO_STREAM("Visualising plan for: " << target);
+  visual_tools->publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
+  visual_tools->trigger();
+
   if (user_prompts)
   {
     std::string display_text = "Moving to named target : " + target + ", press Next to begin";
     visual_tools->prompt(display_text);
   }
 
-  move_group->setNamedTarget(target);
-
-  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-  move_group->plan(my_plan);
   move_group->move();
 }
 
@@ -201,12 +288,6 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTar
   checkTrialsLimit(trials);
   bool plan_success = false;
   int trial = 0;
-
-  if(user_prompts)
-  {
-    std::string message = "Attempting planning for " + display_name + ", press Next to begin";
-    visual_tools->prompt(message);
-  }
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   while(trial++ < trials)
@@ -237,8 +318,6 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTar
 }
 
 
-
-
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "seher_demo");
@@ -258,19 +337,21 @@ int main(int argc, char **argv)
 
   target_pose1.position.x = 0.3;
   target_pose1.position.y = 0.4;
-  target_pose1.position.z = 0.15;
+  target_pose1.position.z = 0.05;
   geometry_msgs::Quaternion quat_msg;
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
 
   int trials = 5;
 
+  seher_obj.gripperOpen(nh);
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre pick pose"));
 
-  target_pose1.position.z -= 0.1;
+  target_pose1.position.z -= 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pick pose"));
+  seher_obj.gripperClose(nh);
 
-  target_pose1.position.z += 0.1;
+  target_pose1.position.z += 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post pick pose"));
 
 
@@ -279,13 +360,12 @@ int main(int argc, char **argv)
   target_pose1.position.x = -0.25;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre place pose"));
 
-  target_pose1.position.z -= 0.1;
+  target_pose1.position.z -= 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"place pose"));
+  seher_obj.gripperOpen(nh);
 
-  target_pose1.position.z += 0.1;
+  target_pose1.position.z += 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post place pose"));
-
-
 
   return 0;
 }
