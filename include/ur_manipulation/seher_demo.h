@@ -27,11 +27,14 @@ public:
 
   const std::string GROUP_MANIP = "manipulator";
   const std::string GROUP_GRIPP = "endeffector";
+  const std::string COMMAND_ADD = "add";
+  const std::string COMMAND_REMOVE = "remove";
 
   int max_trials;
   bool user_prompts;
 
   void addCollissionObjects();
+  void addOrRemoveTestPieceCollissionObject(std::string command);
   void checkTrialsLimit(int trials);
   bool gripperClose(ros::NodeHandle nh);
   bool gripperOpen(ros::NodeHandle nh);
@@ -41,7 +44,6 @@ public:
   moveit::planning_interface::MoveGroupInterface::Plan getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
   void printBasicInfo();
 
-
 private:
 
   moveit::planning_interface::MoveGroupInterface *move_group;
@@ -50,6 +52,7 @@ private:
   moveit_visual_tools::MoveItVisualTools *visual_tools;
   Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
   const int IO_SERVICE_FUN_LEVEL_ = 1;   // Not exactly sure what this is, but 1 seems to work. If it fails, try 2.
+
 };
 
 

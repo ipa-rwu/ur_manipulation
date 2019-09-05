@@ -1,9 +1,9 @@
 /// TODO:
-/// [] Wrap moveToNamedPose in multiple trials as well
+/// [x] Wrap moveToNamedPose in multiple trials as well
 /// [x] Try to merge plan and execute functions (and hence number of trial loops)
 /// [x] Incorporate gripper functionality
-/// [] Try with moveit pick and place interface instead
-///
+/// [] Try with moveit pick and place interface instead - Requires implementation of prismatic joints in URDF and controllers for the same
+/// [] Test the test piece collission object add/remove functionality more, including trajectories
 
 
 #include "ur_manipulation/seher_demo.h"
@@ -154,6 +154,9 @@ void SeherDemo::addCollissionObjects()
 
   collision_objects.push_back(object);
 
+
+
+
   // Now, let's add the collision object into the world
   ROS_INFO_NAMED("tutorial", "Adding collission objects into the world");
   planning_scene_interface.addCollisionObjects(collision_objects);
@@ -162,6 +165,48 @@ void SeherDemo::addCollissionObjects()
   visual_tools->publishText(text_pose, "Add object", rvt::WHITE, rvt::XLARGE);
   visual_tools->trigger();
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+}
+
+void SeherDemo::addOrRemoveTestPieceCollissionObject(std::string command)
+{
+  if(command!= COMMAND_ADD && command!= COMMAND_REMOVE)
+  {
+    ROS_ERROR_STREAM("Unknown test piece collission object manipulation command : " << command << ". Expecting " << COMMAND_ADD << " or " << COMMAND_REMOVE);
+    return;
+  }
+
+  // The id of the object is used to identify it.
+  moveit_msgs::CollisionObject object1;
+  object1.id = "Test Cube";
+  object1.header.frame_id=move_group->getEndEffectorLink();
+
+  // Define a box to add to the world.
+  shape_msgs::SolidPrimitive primitive1;
+  primitive1.type = primitive1.BOX;
+  primitive1.dimensions.resize(3);
+  primitive1.dimensions[0] = 0.03;
+  primitive1.dimensions[1] = 0.03;
+  primitive1.dimensions[2] = 0.03;
+
+  // Define a pose for the box (specified relative to frame_id
+  geometry_msgs::Pose box_pose1;
+  box_pose1.orientation.w = 1.0;
+  box_pose1.position.x = 0.0;
+  box_pose1.position.y = 0.0;
+  box_pose1.position.z = 0.015;
+
+  object1.primitives.push_back(primitive1);
+  object1.primitive_poses.push_back(box_pose1);
+  object1.operation = (command== COMMAND_ADD) ? object1.ADD : object1.REMOVE;
+
+  std::vector<moveit_msgs::CollisionObject> collision_objects;
+  collision_objects.push_back(object1);
+
+
+  ROS_INFO_STREAM( command << " test piece collission object.");
+  planning_scene_interface.addCollisionObjects(collision_objects);
+
+
 }
 
 void SeherDemo::checkTrialsLimit(int trials)
@@ -350,6 +395,7 @@ int main(int argc, char **argv)
   target_pose1.position.z -= 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pick pose"));
   seher_obj.gripperClose(nh);
+  seher_obj.addOrRemoveTestPieceCollissionObject(seher_obj.COMMAND_ADD);
 
   target_pose1.position.z += 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post pick pose"));
@@ -363,6 +409,7 @@ int main(int argc, char **argv)
   target_pose1.position.z -= 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"place pose"));
   seher_obj.gripperOpen(nh);
+  seher_obj.addOrRemoveTestPieceCollissionObject(seher_obj.COMMAND_REMOVE);
 
   target_pose1.position.z += 0.03;
   seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post place pose"));
