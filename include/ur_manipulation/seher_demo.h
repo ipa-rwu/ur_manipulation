@@ -33,13 +33,14 @@ public:
 
   int max_trials;
   bool user_prompts;
+  ros::Publisher planning_scene_diff_publisher;
 
   void addCollissionObjects();
   void addOrRemoveTestPieceCollissionObject(std::string command);
   void checkTrialsLimit(int trials);
   bool gripperClose(ros::NodeHandle nh);
   bool gripperOpen(ros::NodeHandle nh);
-  void initialiseMoveit();
+  void initialiseMoveit(ros::NodeHandle nh);
   bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
   moveit::planning_interface::MoveGroupInterface::Plan getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);

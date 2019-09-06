@@ -3,7 +3,7 @@
 /// [x] Try to merge plan and execute functions (and hence number of trial loops)
 /// [x] Incorporate gripper functionality
 /// [] Try with moveit pick and place interface instead - Requires implementation of prismatic joints in URDF and controllers for the same
-/// [] Test the test piece collission object add/remove functionality more, including trajectories
+/// [] Test the test piece collission object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
 
 
 #include "ur_manipulation/seher_demo.h"
@@ -29,7 +29,6 @@ SeherDemo::SeherDemo()  :
 }
 
 SeherDemo::~SeherDemo() {}
-
 
 void SeherDemo::printBasicInfo()
 {
@@ -62,15 +61,13 @@ bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterf
   return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;
 }
 
-
 void SeherDemo::addCollissionObjects()
 {
   namespace rvt = rviz_visual_tools;
-  moveit_msgs::CollisionObject object;
-  object.header.frame_id = move_group->getPlanningFrame();
-
-  // The id of the object is used to identify it.
-  object.id = "Floor";
+  moveit_msgs::AttachedCollisionObject object;
+  object.link_name = move_group->getPlanningFrame();
+  object.object.header.frame_id = move_group->getPlanningFrame();
+  object.object.id = "Floor";
 
   // Define a box to add to the world.
   shape_msgs::SolidPrimitive primitive;
@@ -87,15 +84,19 @@ void SeherDemo::addCollissionObjects()
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
   box_pose.position.z = -0.001; //Push it slightly down to avoid collission with base plate.
 
-  object.primitives.push_back(primitive);
-  object.primitive_poses.push_back(box_pose);
-  object.operation = object.ADD;
+  // Since we are attaching the object to the robot base
+  // we want the collision checker to ignore collisions between the object and the robot base
+  object.touch_links = std::vector<std::string>{ "base_link"};
+  moveit_msgs::PlanningScene planning_scene;
 
-  std::vector<moveit_msgs::CollisionObject> collision_objects;
-  collision_objects.push_back(object);
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
+
 
   // The id of the object is used to identify it.
-  object.id = "Cieling";
+  object.object.id = "Cieling";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
@@ -108,14 +109,13 @@ void SeherDemo::addCollissionObjects()
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
   box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION;
 
-  object.primitives.push_back(primitive);
-  object.primitive_poses.push_back(box_pose);
-  object.operation = object.ADD;
-
-  collision_objects.push_back(object);
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
 
   // The id of the object is used to identify it.
-  object.id = "Left Wall";
+  object.object.id  = "Left Wall";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
@@ -128,14 +128,13 @@ void SeherDemo::addCollissionObjects()
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
   box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
-  object.primitives.push_back(primitive);
-  object.primitive_poses.push_back(box_pose);
-  object.operation = object.ADD;
-
-  collision_objects.push_back(object);
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
 
   // The id of the object is used to identify it.
-  object.id = "Right Wall";
+  object.object.id = "Right Wall";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
@@ -148,14 +147,13 @@ void SeherDemo::addCollissionObjects()
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
   box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
-  object.primitives.push_back(primitive);
-  object.primitive_poses.push_back(box_pose);
-  object.operation = object.ADD;
-
-  collision_objects.push_back(object);
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
 
   // The id of the object is used to identify it.
-  object.id = "Back Wall";
+  object.object.id = "Back Wall";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
@@ -168,23 +166,15 @@ void SeherDemo::addCollissionObjects()
   box_pose.position.y = -BASE_OFFSET_FROM_BACK_WALL_;
   box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
-  object.primitives.push_back(primitive);
-  object.primitive_poses.push_back(box_pose);
-  object.operation = object.ADD;
-
-  collision_objects.push_back(object);
-
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
 
 
-
-  // Now, let's add the collision object into the world
-  ROS_INFO_NAMED("tutorial", "Adding collission objects into the world");
-  planning_scene_interface.addCollisionObjects(collision_objects);
-
-  // Show text in RViz of status
-  visual_tools->publishText(text_pose, "Add object", rvt::WHITE, rvt::XLARGE);
-  visual_tools->trigger();
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  planning_scene.is_diff = true;
+  planning_scene_diff_publisher.publish(planning_scene);
+  ROS_INFO_NAMED("seher_demo", "Adding collission objects into the world");
 }
 
 void SeherDemo::addOrRemoveTestPieceCollissionObject(std::string command)
@@ -195,35 +185,37 @@ void SeherDemo::addOrRemoveTestPieceCollissionObject(std::string command)
     return;
   }
 
-  // The id of the object is used to identify it.
-  moveit_msgs::CollisionObject object1;
-  object1.id = "Test Cube";
-  object1.header.frame_id=move_group->getEndEffectorLink();
+  moveit_msgs::AttachedCollisionObject attached_object;
+  attached_object.link_name = move_group->getEndEffectorLink();
+  attached_object.object.header.frame_id = move_group->getEndEffectorLink();
+  attached_object.object.id = "box";
 
   // Define a box to add to the world.
   shape_msgs::SolidPrimitive primitive1;
   primitive1.type = primitive1.BOX;
   primitive1.dimensions.resize(3);
-  primitive1.dimensions[0] = 0.03;
-  primitive1.dimensions[1] = 0.03;
-  primitive1.dimensions[2] = 0.03;
+  primitive1.dimensions[0] = 0.02;
+  primitive1.dimensions[1] = 0.02;
+  primitive1.dimensions[2] = 0.02;
 
   // Define a pose for the box (specified relative to frame_id
   geometry_msgs::Pose box_pose1;
   box_pose1.orientation.w = 1.0;
   box_pose1.position.x = 0.0;
   box_pose1.position.y = 0.0;
-  box_pose1.position.z = 0.015;
+  box_pose1.position.z = 0.01;  //Object Z dimension/2
 
-  object1.primitives.push_back(primitive1);
-  object1.primitive_poses.push_back(box_pose1);
-  object1.operation = (command== COMMAND_ADD) ? object1.ADD : object1.REMOVE;
+  attached_object.object.primitives.push_back(primitive1);
+  attached_object.object.primitive_poses.push_back(box_pose1);
+  attached_object.object.operation = (command== COMMAND_ADD) ? attached_object.object.ADD : attached_object.object.REMOVE;
 
-  std::vector<moveit_msgs::CollisionObject> collision_objects;
-  collision_objects.push_back(object1);
+  attached_object.touch_links = std::vector<std::string>{ move_group->getEndEffectorLink(), "egp50_pincer_link" };
 
-  ROS_INFO_STREAM( command << " test piece collission object.");
-  planning_scene_interface.addCollisionObjects(collision_objects);
+  moveit_msgs::PlanningScene planning_scene;
+  planning_scene.robot_state.is_diff = true;
+  planning_scene.is_diff = true;
+  planning_scene.robot_state.attached_collision_objects.push_back(attached_object);
+  planning_scene_diff_publisher.publish(planning_scene);
 }
 
 void SeherDemo::checkTrialsLimit(int trials)
@@ -296,7 +288,7 @@ bool SeherDemo::gripperClose(ros::NodeHandle nh)
   }
 }
 
-void SeherDemo::initialiseMoveit()
+void SeherDemo::initialiseMoveit(ros::NodeHandle nh)
 {
   namespace rvt = rviz_visual_tools;
   move_group = new moveit::planning_interface::MoveGroupInterface(GROUP_MANIP);
@@ -308,6 +300,7 @@ void SeherDemo::initialiseMoveit()
   text_pose.translation().z() = 1.75;
   visual_tools->publishText(text_pose, "Seher Demo", rvt::WHITE, rvt::XLARGE);
   visual_tools->trigger();
+  planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
 }
 
@@ -390,11 +383,13 @@ int main(int argc, char **argv)
  ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
   SeherDemo seher_obj;
-  seher_obj.initialiseMoveit();
+  seher_obj.initialiseMoveit(nh);
   seher_obj.printBasicInfo();
   seher_obj.addCollissionObjects();
+  ROS_INFO("Moving to home pose");
   seher_obj.moveToNamedTarget("home");
 
+  ROS_INFO("Starting PnP");
   //Pick
 
   geometry_msgs::Pose target_pose1;
