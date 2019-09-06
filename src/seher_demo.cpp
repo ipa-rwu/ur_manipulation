@@ -76,16 +76,16 @@ void SeherDemo::addCollissionObjects()
   shape_msgs::SolidPrimitive primitive;
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
-  primitive.dimensions[0] = 0.97;
-  primitive.dimensions[1] = 1.47;
+  primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
+  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
   primitive.dimensions[2] = 0;
 
   // Define a pose for the box (specified relative to frame_id)
   geometry_msgs::Pose box_pose;
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0;
-  box_pose.position.y = 0.460; //  Base is ofset by -(0.1470/2-.275)
-  box_pose.position.z = -0.001;
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;  // Not perfectly symmetrical.
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
+  box_pose.position.z = -0.001; //Push it slightly down to avoid collission with base plate.
 
   object.primitives.push_back(primitive);
   object.primitive_poses.push_back(box_pose);
@@ -95,18 +95,38 @@ void SeherDemo::addCollissionObjects()
   collision_objects.push_back(object);
 
   // The id of the object is used to identify it.
+  object.id = "Cieling";
+
+  // Define a box to add to the world.
+  primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
+  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
+  primitive.dimensions[2] = 0;
+
+  // Define a pose for the box (specified relative to frame_id
+  box_pose.orientation.w = 1.0;
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;  // Not perfectly symmetrical.
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION;
+
+  object.primitives.push_back(primitive);
+  object.primitive_poses.push_back(box_pose);
+  object.operation = object.ADD;
+
+  collision_objects.push_back(object);
+
+  // The id of the object is used to identify it.
   object.id = "Left Wall";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
-  primitive.dimensions[1] = 1.47;
-  primitive.dimensions[2] = 1.1;
+  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0.485;
-  box_pose.position.y = 0.460;
-  box_pose.position.z = 0.55;
+  box_pose.position.x = BASE_OFFSET_FROM_RIGHT_WALL_;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
   object.primitives.push_back(primitive);
   object.primitive_poses.push_back(box_pose);
@@ -119,14 +139,14 @@ void SeherDemo::addCollissionObjects()
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
-  primitive.dimensions[1] = 1.47;
-  primitive.dimensions[2] = 1.1;
+  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = -0.485;
-  box_pose.position.y = 0.460;
-  box_pose.position.z = 0.55;
+  box_pose.position.x = -BASE_OFFSET_FROM_LEFT_WALL_;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
   object.primitives.push_back(primitive);
   object.primitive_poses.push_back(box_pose);
@@ -138,15 +158,15 @@ void SeherDemo::addCollissionObjects()
   object.id = "Back Wall";
 
   // Define a box to add to the world.
-  primitive.dimensions[0] = 0.97;
+  primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
   primitive.dimensions[1] = 0;
-  primitive.dimensions[2] = 1.1;
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = 0;
-  box_pose.position.y = -0.275;
-  box_pose.position.z = 0.55;
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;
+  box_pose.position.y = -BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
 
   object.primitives.push_back(primitive);
   object.primitive_poses.push_back(box_pose);
@@ -202,11 +222,8 @@ void SeherDemo::addOrRemoveTestPieceCollissionObject(std::string command)
   std::vector<moveit_msgs::CollisionObject> collision_objects;
   collision_objects.push_back(object1);
 
-
   ROS_INFO_STREAM( command << " test piece collission object.");
   planning_scene_interface.addCollisionObjects(collision_objects);
-
-
 }
 
 void SeherDemo::checkTrialsLimit(int trials)
@@ -369,6 +386,8 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
   ros::AsyncSpinner spinner(1);
   spinner.start();
+
+ ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
   SeherDemo seher_obj;
   seher_obj.initialiseMoveit();
