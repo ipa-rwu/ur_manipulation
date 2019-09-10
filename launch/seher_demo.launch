@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
- <node name="seher_demo" pkg="ur_manipulation" type="seher_demo" respawn="false" output="screen"/>
+ <arg name="prompts" default="true" />
+ <arg name="max_trials" default="5" />
+ <node name="seher_demo" pkg="ur_manipulation" type="seher_demo" respawn="false" output="screen" args="$(arg prompts) $(arg max_trials)"/>
 
 </launch>

@@ -28,6 +28,13 @@ SeherDemo::SeherDemo()  :
 
 }
 
+SeherDemo::SeherDemo(int max_trials, std::string user_prompts)
+{
+  this->max_trials = max_trials;
+  this->user_prompts =  (user_prompts=="True"|| user_prompts=="true")? true : false;
+  ROS_INFO_STREAM("User prompts : " << this->user_prompts << " | Max planning trials : " << max_trials);
+}
+
 SeherDemo::~SeherDemo() {}
 
 void SeherDemo::printBasicInfo()
@@ -177,7 +184,7 @@ void SeherDemo::addCollissionObjects()
   ROS_INFO_NAMED("seher_demo", "Adding collission objects into the world");
 }
 
-void SeherDemo::addOrRemoveTestPieceCollissionObject(std::string command)
+void SeherDemo::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string command)
 {
   if(command!= COMMAND_ADD && command!= COMMAND_REMOVE)
   {
@@ -337,6 +344,61 @@ void SeherDemo::moveToNamedTarget(std::string target)
   move_group->move();
 }
 
+
+
+void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
+/** Assuming  the provided @param{target_pose}is the pose of the target object itself,
+ * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
+ * then moves down to grasp it,
+ * and then moves back up.
+ */
+{
+  // Make sure gripper is open
+  gripperOpen(nh);
+
+  // Go to a set height above given pose
+  target_pose.position.z+=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
+  ROS_INFO("---------------------------");
+
+  // Go down to reach and grasp the object
+  target_pose.position.z-=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pick Pose"));
+  gripperClose(nh);
+  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
+  ROS_INFO("---------------------------");
+
+  // Go back up
+  target_pose.position.z+=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Post Pick Pose"));
+  ROS_INFO("---------------------------");
+}
+
+void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
+/** Assuming  the provided @param{target_pose}is the pose of the place position,
+ * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
+ * then moves down to place the object,
+ * and then moves back up.
+ */
+{
+  // Go to a set height above given pose
+  target_pose.position.z+=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Place Pose"));
+  ROS_INFO("---------------------------");
+
+  // Go down and place the object
+  target_pose.position.z-=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Place Pose"));
+  ROS_INFO("---------------------------");
+  gripperOpen(nh);
+  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
+
+  // Go back up
+  target_pose.position.z+=height;
+  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Post Place Pose"));
+  ROS_INFO("---------------------------");
+}
+
 moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials=3, std::string display_name="target pose")
 {
   namespace rvt = rviz_visual_tools;
@@ -380,53 +442,31 @@ int main(int argc, char **argv)
   ros::AsyncSpinner spinner(1);
   spinner.start();
 
- ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
+  ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
-  SeherDemo seher_obj;
+  SeherDemo seher_obj(atoi(argv[2]),argv[1]);
   seher_obj.initialiseMoveit(nh);
   seher_obj.printBasicInfo();
+  ROS_INFO("---------------------------");
   seher_obj.addCollissionObjects();
   ROS_INFO("Moving to home pose");
   seher_obj.moveToNamedTarget("home");
 
   ROS_INFO("Starting PnP");
-  //Pick
+  ROS_INFO("---------------------------");
 
   geometry_msgs::Pose target_pose1;
 
   target_pose1.position.x = 0.3;
   target_pose1.position.y = 0.4;
-  target_pose1.position.z = 0.05;
+  target_pose1.position.z = 0.02;
   geometry_msgs::Quaternion quat_msg;
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
 
-  int trials = 5;
-
-  seher_obj.gripperOpen(nh);
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre pick pose"));
-
-  target_pose1.position.z -= 0.03;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pick pose"));
-  seher_obj.gripperClose(nh);
-  seher_obj.addOrRemoveTestPieceCollissionObject(seher_obj.COMMAND_ADD);
-
-  target_pose1.position.z += 0.03;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post pick pose"));
-
-
-  // Place
-
-  target_pose1.position.x = -0.25;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"pre place pose"));
-
-  target_pose1.position.z -= 0.03;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"place pose"));
-  seher_obj.gripperOpen(nh);
-  seher_obj.addOrRemoveTestPieceCollissionObject(seher_obj.COMMAND_REMOVE);
-
-  target_pose1.position.z += 0.03;
-  seher_obj.moveGroupExecutePlan(seher_obj.getPlanToPoseTarget(target_pose1,trials,"post place pose"));
+  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
+  target_pose1.position.x -=0.25;
+  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
 
   return 0;
 }
