@@ -48,6 +48,7 @@ public:
   void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh);
   void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh);
   void printBasicInfo();
+  bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
 
 private:
 

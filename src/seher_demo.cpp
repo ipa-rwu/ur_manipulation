@@ -4,6 +4,7 @@
 /// [x] Incorporate gripper functionality
 /// [] Try with moveit pick and place interface instead - Requires implementation of prismatic joints in URDF and controllers for the same
 /// [] Test the test piece collission object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
+/// **PRIORITY**:[] Change up and down motion from target pose movement to cartesian pose move to ensure smooth trajectory
 
 
 #include "ur_manipulation/seher_demo.h"
@@ -55,6 +56,29 @@ void SeherDemo::printBasicInfo()
   std::cout << std::endl;
 
 }
+
+bool SeherDemo::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion, double delta_orientation)
+{
+
+  if (  abs(pose1.position.x-pose2.position.x ) <= delta_posistion
+        && abs(pose1.position.y-pose2.position.y ) <= delta_posistion
+        && abs(pose1.position.z-pose2.position.z ) <= delta_posistion
+        && abs(pose1.orientation.x - pose2.orientation.x) <= delta_orientation
+        && abs(pose1.orientation.y - pose2.orientation.y) <= delta_orientation
+        && abs(pose1.orientation.z - pose2.orientation.z) <= delta_orientation
+        && abs(pose1.orientation.w - pose2.orientation.w) <= delta_orientation
+     )
+  {
+    ROS_INFO_STREAM("Poses eqaul");
+    return true;
+  }
+  else
+  {
+    ROS_INFO_STREAM("Poses different");
+    return false;
+  }
+}
+
 
 bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
@@ -358,8 +382,18 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
 
   // Go to a set height above given pose
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
+  geometry_msgs::Pose current_pose = move_group->getCurrentPose().pose;
+
+  if( comparePoses(current_pose, target_pose)  )
+  {
+    ROS_INFO_STREAM("Poses same, skipping Pre Pick Pose");
+  }
+  else
+  {
+    moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
+  }
   ROS_INFO("---------------------------");
+
 
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
@@ -450,7 +484,7 @@ int main(int argc, char **argv)
   ROS_INFO("---------------------------");
   seher_obj.addCollissionObjects();
   ROS_INFO("Moving to home pose");
-  seher_obj.moveToNamedTarget("home");
+//  seher_obj.moveToNamedTarget("home");
 
   ROS_INFO("Starting PnP");
   ROS_INFO("---------------------------");
@@ -463,6 +497,30 @@ int main(int argc, char **argv)
   geometry_msgs::Quaternion quat_msg;
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
+
+//  bool switcher=true;
+//  while(ros::ok())
+//  {
+//    seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
+//    double offset = (switcher)?0.25:-0.25;
+//    target_pose1.position.x -=offset;
+//    seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+//    switcher = !switcher;
+//    sleep(2);
+//  }
+
+  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
+  target_pose1.position.x -=0.25;
+  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+
+  ROS_INFO("Second run----------------------------------");
+
+
+  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
+  target_pose1.position.x +=0.25;
+  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+
+  ROS_INFO("Third run----------------------------------");
 
   seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
   target_pose1.position.x -=0.25;
