@@ -83,7 +83,7 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPath
   move_group->setStartStateToCurrentState();
   std::vector<geometry_msgs::Pose> waypoints;
   waypoints.push_back(target_pose);
-  move_group->setMaxVelocityScalingFactor(0.1);
+
   moveit_msgs::RobotTrajectory trajectory;
   double fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
 
@@ -295,7 +295,7 @@ bool SeherDemo::gripperOpen(ros::NodeHandle nh)
 {
   ur_msgs::SetIO io_msg;
   io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
-  io_msg.request.pin = static_cast<int8_t>(0);
+  io_msg.request.pin = static_cast<int8_t>(1);  //Pin 1 is open
   io_msg.request.state = 1;
   ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
 
@@ -326,7 +326,7 @@ bool SeherDemo::gripperClose(ros::NodeHandle nh)
 {
   ur_msgs::SetIO io_msg;
   io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
-  io_msg.request.pin = static_cast<int8_t>(1);
+  io_msg.request.pin = static_cast<int8_t>(0);    //Pin 0 is close
   io_msg.request.state = 1;
   ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
 
