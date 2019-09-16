@@ -69,12 +69,10 @@ bool SeherDemo::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose
         && abs(pose1.orientation.w - pose2.orientation.w) <= delta_orientation
      )
   {
-    ROS_INFO_STREAM("Poses eqaul");
     return true;
   }
   else
   {
-    ROS_INFO_STREAM("Poses different");
     return false;
   }
 }
@@ -101,6 +99,16 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPath
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   my_plan.trajectory_ = trajectory;
   return my_plan;
+
+}
+
+void SeherDemo::sleepSafeFor(double duration)
+{
+  ros::Time start = ros::Time::now();
+  while(ros::Time::now() - start <= ros::Duration(duration))
+  {
+    ros::spinOnce();
+  }
 
 }
 
@@ -423,6 +431,7 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
   target_pose.position.z-=height;
   moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   gripperClose(nh);
+  sleepSafeFor(0.5);
   addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
@@ -449,6 +458,7 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
   moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
   ROS_INFO("---------------------------");
   gripperOpen(nh);
+  sleepSafeFor(0.5);
   addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
@@ -530,7 +540,7 @@ int main(int argc, char **argv)
     target_pose1.position.x -=offset;
     seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
     switcher = !switcher;
-    sleep(2);
+    seher_obj.sleepSafeFor(1);
   }
 
   return 0;
