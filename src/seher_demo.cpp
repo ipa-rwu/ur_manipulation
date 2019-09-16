@@ -2,9 +2,9 @@
 /// [x] Wrap moveToNamedPose in multiple trials as well
 /// [x] Try to merge plan and execute functions (and hence number of trial loops)
 /// [x] Incorporate gripper functionality
+/// [x] Change up and down motion from target pose movement to cartesian pose move to ensure smooth trajectory
 /// [] Try with moveit pick and place interface instead - Requires implementation of prismatic joints in URDF and controllers for the same
 /// [] Test the test piece collission object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
-/// **PRIORITY**:[] Change up and down motion from target pose movement to cartesian pose move to ensure smooth trajectory
 
 
 #include "ur_manipulation/seher_demo.h"
@@ -79,6 +79,31 @@ bool SeherDemo::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose
   }
 }
 
+moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step, double jump_threshold)
+{
+  namespace rvt = rviz_visual_tools;
+  move_group->setStartStateToCurrentState();
+  std::vector<geometry_msgs::Pose> waypoints;
+  waypoints.push_back(target_pose);
+  move_group->setMaxVelocityScalingFactor(0.1);
+  moveit_msgs::RobotTrajectory trajectory;
+  double fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
+
+  // Visualize the plan in RViz
+  visual_tools->deleteAllMarkers();
+  visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
+  for (std::size_t i = 0; i < waypoints.size(); ++i)
+    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+  visual_tools->trigger();
+
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+  my_plan.trajectory_ = trajectory;
+  return my_plan;
+
+}
+
 
 bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
@@ -89,6 +114,7 @@ bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterf
     visual_tools->prompt(message);
   }
 
+  move_group->setStartStateToCurrentState();
   return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;
 }
 
@@ -368,8 +394,6 @@ void SeherDemo::moveToNamedTarget(std::string target)
   move_group->move();
 }
 
-
-
 void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
 /** Assuming  the provided @param{target_pose}is the pose of the target object itself,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
@@ -397,14 +421,14 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
 
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pick Pose"));
+  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   gripperClose(nh);
   addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
   // Go back up
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Post Pick Pose"));
+  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Pick Pose"));
   ROS_INFO("---------------------------");
 }
 
@@ -422,14 +446,14 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
 
   // Go down and place the object
   target_pose.position.z-=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Place Pose"));
+  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
   ROS_INFO("---------------------------");
   gripperOpen(nh);
   addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Post Place Pose"));
+  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Place Pose"));
   ROS_INFO("---------------------------");
 }
 
@@ -484,7 +508,7 @@ int main(int argc, char **argv)
   ROS_INFO("---------------------------");
   seher_obj.addCollissionObjects();
   ROS_INFO("Moving to home pose");
-//  seher_obj.moveToNamedTarget("home");
+  seher_obj.moveToNamedTarget("home");
 
   ROS_INFO("Starting PnP");
   ROS_INFO("---------------------------");
@@ -498,33 +522,16 @@ int main(int argc, char **argv)
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
 
-//  bool switcher=true;
-//  while(ros::ok())
-//  {
-//    seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
-//    double offset = (switcher)?0.25:-0.25;
-//    target_pose1.position.x -=offset;
-//    seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
-//    switcher = !switcher;
-//    sleep(2);
-//  }
-
-  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
-  target_pose1.position.x -=0.25;
-  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
-
-  ROS_INFO("Second run----------------------------------");
-
-
-  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
-  target_pose1.position.x +=0.25;
-  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
-
-  ROS_INFO("Third run----------------------------------");
-
-  seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
-  target_pose1.position.x -=0.25;
-  seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+  bool switcher=true;
+  while(ros::ok())
+  {
+    seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
+    double offset = (switcher)?0.25:-0.25;
+    target_pose1.position.x -=offset;
+    seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+    switcher = !switcher;
+    sleep(2);
+  }
 
   return 0;
 }

@@ -49,6 +49,7 @@ public:
   void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh);
   void printBasicInfo();
   bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
+  moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step=0.01, double jump_threshold = 0.0);
 
 private:
 
