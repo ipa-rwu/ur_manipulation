@@ -147,7 +147,7 @@ void SeherDemo::addCollissionObjects()
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;  // Not perfectly symmetrical.
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
-  box_pose.position.z = -0.001; //Push it slightly down to avoid collission with base plate.
+  box_pose.position.z = -0.01; //Push it slightly down to avoid collission with base plate.
 
   // Since we are attaching the object to the robot base
   // we want the collision checker to ignore collisions between the object and the robot base
@@ -432,7 +432,7 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
   moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   gripperClose(nh);
   sleepSafeFor(0.5);
-  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
+//  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
   // Go back up
@@ -459,7 +459,7 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
   ROS_INFO("---------------------------");
   gripperOpen(nh);
   sleepSafeFor(0.5);
-  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
+//  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
   target_pose.position.z+=height;
@@ -527,7 +527,7 @@ int main(int argc, char **argv)
 
   target_pose1.position.x = 0.3;
   target_pose1.position.y = 0.4;
-  target_pose1.position.z = 0.02;
+  target_pose1.position.z = 0.01;
   geometry_msgs::Quaternion quat_msg;
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
