@@ -82,12 +82,46 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPath
   namespace rvt = rviz_visual_tools;
   move_group->setStartStateToCurrentState();
   std::vector<geometry_msgs::Pose> waypoints;
+//  waypoints.push_back(move_group->getCurrentPose().pose);
   waypoints.push_back(target_pose);
 
   moveit_msgs::RobotTrajectory trajectory;
-  double fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+  double fraction=0.0;
+  while(fraction<0.5)
+  {
+    fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+  }
 
   ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
+
+
+  std::vector<ros::Duration> times_from_start;
+    int iter=0;
+    for(auto x: trajectory.joint_trajectory.points)
+    {
+  //    ROS_INFO_STREAM("Iter : "  << iter++ << " point_time_from_start: " << x.time_from_start);
+      times_from_start.push_back(x.time_from_start);
+    }
+
+    // Adjust starting from point 2 i.e. index 1
+    for(int i=1; i< times_from_start.size();i++)
+    {
+
+      if(times_from_start[i]==ros::Duration(0) && i<times_from_start.size())
+      {
+        ros::Duration prev = times_from_start[i];
+        times_from_start[i] = ros::Duration((times_from_start[i-1].toSec()+times_from_start[i+1].toSec())/2.0);
+        ROS_INFO_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
+      }
+    }
+
+    for(int i=0; i< times_from_start.size(); i++)
+    {
+      trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
+  //    ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
+    }
+
+
 
   // Visualize the plan in RViz
   visual_tools->deleteAllMarkers();
@@ -422,10 +456,11 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
   }
   else
   {
-    moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
+//    moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
+    moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Pick Pose"));
   }
   ROS_INFO("---------------------------");
-
+  sleepSafeFor(0.5);
 
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
@@ -450,9 +485,10 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
 {
   // Go to a set height above given pose
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Place Pose"));
+//  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Place Pose"));
+  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Place Pose"));
   ROS_INFO("---------------------------");
-
+  sleepSafeFor(0.5);
   // Go down and place the object
   target_pose.position.z-=height;
   moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
@@ -527,20 +563,23 @@ int main(int argc, char **argv)
 
   target_pose1.position.x = 0.3;
   target_pose1.position.y = 0.4;
-  target_pose1.position.z = 0.01;
+  target_pose1.position.z = 0.012;
   geometry_msgs::Quaternion quat_msg;
   tf::quaternionTFToMsg(tf::createQuaternionFromRPY(angles::from_degrees(180),angles::from_degrees(0),angles::from_degrees(0)),quat_msg);
   target_pose1.orientation = quat_msg;
 
-  bool switcher=true;
+  geometry_msgs::Pose target_pose2 = target_pose1;
+  target_pose1.position.x = 0.05;
+
+
+  bool switcher=false;
   while(ros::ok())
   {
-    seher_obj.pickAtPoseFromHeight(target_pose1, 0.03, nh);
-    double offset = (switcher)?0.25:-0.25;
-    target_pose1.position.x -=offset;
-    seher_obj.placeAtPoseFromHeight(target_pose1, 0.03, nh);
+    seher_obj.pickAtPoseFromHeight((switcher)?target_pose1:target_pose2, 0.03, nh);
+    seher_obj.sleepSafeFor(0.5);
+    seher_obj.placeAtPoseFromHeight((switcher)?target_pose2:target_pose1, 0.03, nh);
     switcher = !switcher;
-    seher_obj.sleepSafeFor(1);
+    seher_obj.sleepSafeFor(0.5);
   }
 
   return 0;
