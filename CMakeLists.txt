@@ -29,6 +29,7 @@ find_package(catkin REQUIRED
     tf
     tf_conversions
     ur_msgs
+    std_msgs
 )
 
 find_package(Boost REQUIRED system filesystem date_time thread)

@@ -34,7 +34,9 @@ public:
 
   int max_trials;
   bool user_prompts;
+  int failure_counter_;
   ros::Publisher planning_scene_diff_publisher;
+  moveit::planning_interface::MoveGroupInterface *move_group;
 
   void addCollissionObjects();
   void addOrRemoveTestPieceCollissionObjectWRTRobot(std::string command);
@@ -51,10 +53,12 @@ public:
   bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
   moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step=0.01, double jump_threshold = 0.0);
   void sleepSafeFor(double duration);
+  void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef, double jump_thresh);
+  void executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label);
+  void adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory);
 
 private:
 
-  moveit::planning_interface::MoveGroupInterface *move_group;
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
   const robot_state::JointModelGroup* joint_model_group ;
   moveit_visual_tools::MoveItVisualTools *visual_tools;

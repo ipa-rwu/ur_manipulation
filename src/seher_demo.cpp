@@ -10,7 +10,7 @@
 #include "ur_manipulation/seher_demo.h"
 #include "tf/transform_datatypes.h"
 #include <angles/angles.h>
-
+#include <std_msgs/Int64.h>
 
 void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll,double& pitch, double& yaw)
 {
@@ -77,29 +77,24 @@ bool SeherDemo::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose
   }
 }
 
-moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step, double jump_threshold)
+void SeherDemo::executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef=0.001, double jump_thresh = 0.0)
 {
   namespace rvt = rviz_visual_tools;
-  move_group->setStartStateToCurrentState();
-  std::vector<geometry_msgs::Pose> waypoints;
-//  waypoints.push_back(move_group->getCurrentPose().pose);
-  waypoints.push_back(target_pose);
-
   moveit_msgs::RobotTrajectory trajectory;
   double fraction=0.0;
   while(fraction<0.5)
   {
-    fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+    fraction = move_group->computeCartesianPath(waypoints, eef, jump_thresh, trajectory);
   }
 
-  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan with waypoints (" << fraction*100  << "% acheived)");
 
 
   std::vector<ros::Duration> times_from_start;
     int iter=0;
     for(auto x: trajectory.joint_trajectory.points)
     {
-  //    ROS_INFO_STREAM("Iter : "  << iter++ << " point_time_from_start: " << x.time_from_start);
+      ROS_INFO_STREAM(iter++ << " point_time_from_start: " << x.time_from_start);
       times_from_start.push_back(x.time_from_start);
     }
 
@@ -111,7 +106,7 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPath
       {
         ros::Duration prev = times_from_start[i];
         times_from_start[i] = ros::Duration((times_from_start[i-1].toSec()+times_from_start[i+1].toSec())/2.0);
-        ROS_INFO_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
+        ROS_WARN_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
       }
     }
 
@@ -122,6 +117,93 @@ moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPath
     }
 
 
+
+  // Visualize the plan in RViz
+  visual_tools->deleteAllMarkers();
+  visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
+  for (std::size_t i = 0; i < waypoints.size(); ++i)
+    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+  visual_tools->trigger();
+  if(user_prompts) visual_tools->prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+
+  moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+  my_plan.trajectory_ = trajectory;
+  move_group->execute(my_plan);
+
+}
+
+
+void SeherDemo::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory)
+{
+
+  std::vector<ros::Duration> times_from_start;
+  times_from_start.resize(trajectory.joint_trajectory.points.size());
+
+  for(int i=0; i < times_from_start.size() ; i++)
+  {
+    times_from_start[i]= trajectory.joint_trajectory.points[i].time_from_start;
+//    ROS_INFO_STREAM("P: "  << i<< " time_from_start: " << times_from_start[i]);
+  }
+
+//  ROS_INFO_STREAM("Size of time_from_start :" << times_from_start.size() << " trajectory points: " << trajectory.joint_trajectory.points.size());
+
+
+  // Adjust starting from point 2 i.e. index 1
+  bool adjusted_flag=false;
+  for(int i=1; i< times_from_start.size()-1;i++)
+  {
+    if(times_from_start[i]==ros::Duration(0))
+    {
+      ros::Duration prev = times_from_start[i];
+      times_from_start[i] = ros::Duration((times_from_start[i-1].toSec()+times_from_start[i+1].toSec())/2.0);
+      ROS_WARN_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
+      adjusted_flag=true;
+    }
+  }
+
+  if( times_from_start.size()>1 &&  times_from_start[times_from_start.size()-1] == ros::Duration(0))
+  {
+    ROS_WARN_STREAM("Final point in trajectory has 0 timestamp, incrementing logically");
+    times_from_start[times_from_start.size()-1] = times_from_start[times_from_start.size()-2] + ros::Duration(0.1);
+    adjusted_flag=true;
+  }
+
+  if(adjusted_flag)
+  {
+    for(int i=0; i< times_from_start.size(); i++)
+    {
+      trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
+      ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
+    }
+  }
+
+}
+
+moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step, double jump_threshold)
+{
+  namespace rvt = rviz_visual_tools;
+  move_group->setStartStateToCurrentState();
+  std::vector<geometry_msgs::Pose> waypoints;
+  waypoints.push_back(move_group->getCurrentPose().pose);
+  waypoints.push_back(target_pose);
+
+  moveit_msgs::RobotTrajectory trajectory;
+  double fraction=0.0;
+  while(fraction<0.5)
+  {
+    fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
+  }
+
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
+
+//  trajectory.joint_trajectory.points.resize(5);
+//  trajectory.joint_trajectory.points[0].time_from_start = ros::Duration(0);
+//  trajectory.joint_trajectory.points[1].time_from_start = ros::Duration(0.1234);
+//  trajectory.joint_trajectory.points[2].time_from_start = ros::Duration(0);
+//  trajectory.joint_trajectory.points[3].time_from_start = ros::Duration(0.3456);
+//  trajectory.joint_trajectory.points[4].time_from_start = ros::Duration(0);
+
+  adjustTrajectoryToFixTimeSequencing(trajectory);
 
   // Visualize the plan in RViz
   visual_tools->deleteAllMarkers();
@@ -157,7 +239,7 @@ bool SeherDemo::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterf
   }
 
   move_group->setStartStateToCurrentState();
-  return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;
+  return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;;
 }
 
 void SeherDemo::addCollissionObjects()
@@ -336,7 +418,7 @@ bool SeherDemo::gripperOpen(ros::NodeHandle nh)
   if(client.call(io_msg))
   {
     ROS_INFO_STREAM("Open gripper initialise : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
-    sleep(1);
+    sleepSafeFor(0.5);
     io_msg.request.state = 0;
     if(client.call(io_msg))
     {
@@ -367,7 +449,7 @@ bool SeherDemo::gripperClose(ros::NodeHandle nh)
   if(client.call(io_msg))
   {
     ROS_INFO_STREAM("Close gripper initialise :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
-    sleep(1);
+    sleepSafeFor(0.5);
     io_msg.request.state = 0;
     if(client.call(io_msg))
     {
@@ -436,6 +518,23 @@ void SeherDemo::moveToNamedTarget(std::string target)
   move_group->move();
 }
 
+void SeherDemo::executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label)
+{
+  int trial=0;
+  while(trial<max_trials)
+  {
+    if(moveGroupExecutePlan(getCartesianPathPlanToPose(target, label)))
+    {
+      return;
+    }
+    ROS_ERROR_STREAM("Execution to " << label << " trial " << trial++ << " failed. Reattempting");
+    failure_counter_++;
+  }
+  ROS_ERROR_STREAM("Maxx execution attempts reached, aborting program");
+  ros::shutdown();
+  exit(-1);
+}
+
 void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
 /** Assuming  the provided @param{target_pose}is the pose of the target object itself,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
@@ -457,14 +556,16 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
   else
   {
 //    moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
-    moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Pick Pose"));
+//    moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Pick Pose"));
+    executeCartesianTrajtoPose(target_pose,"Pre Pick Pose");
   }
   ROS_INFO("---------------------------");
   sleepSafeFor(0.5);
 
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
-  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
+  executeCartesianTrajtoPose(target_pose,"Pick Pose");
+//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   gripperClose(nh);
   sleepSafeFor(0.5);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
@@ -472,7 +573,8 @@ void SeherDemo::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double hei
 
   // Go back up
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Pick Pose"));
+//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Pick Pose"));
+  executeCartesianTrajtoPose(target_pose,"Post Pick Pose");
   ROS_INFO("---------------------------");
 }
 
@@ -486,12 +588,14 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
   // Go to a set height above given pose
   target_pose.position.z+=height;
 //  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Place Pose"));
-  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Place Pose"));
+//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Place Pose"));
+  executeCartesianTrajtoPose(target_pose,"Pre Place Pose");
   ROS_INFO("---------------------------");
   sleepSafeFor(0.5);
   // Go down and place the object
   target_pose.position.z-=height;
-  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
+//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
+  executeCartesianTrajtoPose(target_pose,"Place Pose");
   ROS_INFO("---------------------------");
   gripperOpen(nh);
   sleepSafeFor(0.5);
@@ -499,7 +603,8 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
 
   // Go back up
   target_pose.position.z+=height;
-  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Place Pose"));
+//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Place Pose"));
+  executeCartesianTrajtoPose(target_pose,"Post Place Pose");
   ROS_INFO("---------------------------");
 }
 
@@ -547,6 +652,8 @@ int main(int argc, char **argv)
   spinner.start();
 
   ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
+  ros::Publisher pub_seq = nh.advertise<std_msgs::Int64>("/ur_manipulation/sequence",1);
+  ros::Publisher pub_fail = nh.advertise<std_msgs::Int64>("/ur_manipulation/failure_counter",1);
 
   SeherDemo seher_obj(atoi(argv[2]),argv[1]);
   seher_obj.initialiseMoveit(nh);
@@ -572,15 +679,61 @@ int main(int argc, char **argv)
   target_pose1.position.x = 0.05;
 
 
+  int seq = 0;
   bool switcher=false;
   while(ros::ok())
   {
+    ROS_INFO_STREAM("----------------------SEQ " << seq << "-------------------------------------");
     seher_obj.pickAtPoseFromHeight((switcher)?target_pose1:target_pose2, 0.03, nh);
-    seher_obj.sleepSafeFor(0.5);
     seher_obj.placeAtPoseFromHeight((switcher)?target_pose2:target_pose1, 0.03, nh);
     switcher = !switcher;
-    seher_obj.sleepSafeFor(0.5);
+    std_msgs::Int64 msg;
+    msg.data=seq;
+    pub_seq.publish(msg);
+    msg.data=seher_obj.failure_counter_;
+    pub_fail.publish(msg);
+    ROS_INFO_STREAM("----------------------SEQ " << seq++ << "-------------------------------------");
   }
+
+
+//  seher_obj.getCartesianPathPlanToPose(target_pose1,"TEST");
+
+
+
+//  std::vector<geometry_msgs::Pose> waypoints;
+
+//  geometry_msgs::Pose wp_pose1 = seher_obj.move_group->getCurrentPose().pose;
+//   waypoints.push_back(wp_pose1);
+
+//  wp_pose1.position.x += 0.1;
+//  waypoints.push_back(wp_pose1);
+//  wp_pose1.position.x += 0.1;
+//  waypoints.push_back(wp_pose1);
+
+//  wp_pose1.position.z -= 0.1;
+//  waypoints.push_back(wp_pose1);
+//  wp_pose1.position.z -= 0.1;
+//  waypoints.push_back(wp_pose1);
+
+//  wp_pose1.position.x -= 0.1;
+//  waypoints.push_back(wp_pose1);
+//  wp_pose1.position.x -= 0.1;
+//  waypoints.push_back(wp_pose1);
+
+//  wp_pose1.position.z += 0.1;
+//  waypoints.push_back(wp_pose1);
+//  wp_pose1.position.z += 0.1;
+//  waypoints.push_back(wp_pose1);
+
+//while(ros::ok())
+//{
+//  ROS_INFO_STREAM("----------------------SEQ " << seq << "-------------------------------------");
+//  seher_obj.executeCartesianTrajForWaypoints(waypoints,0.1);
+//  seher_obj.sleepSafeFor(0.5);
+//  ROS_INFO_STREAM("----------------------SEQ " << seq++ << "-------------------------------------");
+//}
+
+
 
   return 0;
 }
