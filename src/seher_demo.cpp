@@ -10,6 +10,7 @@
 #include "ur_manipulation/seher_demo.h"
 #include "tf/transform_datatypes.h"
 #include <angles/angles.h>
+#include <std_msgs/Header.h>
 #include <std_msgs/Int64.h>
 
 void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll,double& pitch, double& yaw)
@@ -652,8 +653,8 @@ int main(int argc, char **argv)
   spinner.start();
 
   ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
-  ros::Publisher pub_seq = nh.advertise<std_msgs::Int64>("/ur_manipulation/sequence",1);
-  ros::Publisher pub_fail = nh.advertise<std_msgs::Int64>("/ur_manipulation/failure_counter",1);
+  ros::Publisher pub_seq = nh.advertise<std_msgs::Header>("/ur_manipulation/sequence",1);
+  ros::Publisher pub_fail = nh.advertise<std_msgs::Header>("/ur_manipulation/failure_counter",1);
 
   SeherDemo seher_obj(atoi(argv[2]),argv[1]);
   seher_obj.initialiseMoveit(nh);
@@ -687,10 +688,11 @@ int main(int argc, char **argv)
     seher_obj.pickAtPoseFromHeight((switcher)?target_pose1:target_pose2, 0.03, nh);
     seher_obj.placeAtPoseFromHeight((switcher)?target_pose2:target_pose1, 0.03, nh);
     switcher = !switcher;
-    std_msgs::Int64 msg;
-    msg.data=seq;
+    std_msgs::Header msg;
+    msg.stamp = ros::Time::now();
+    msg.seq = seq;
     pub_seq.publish(msg);
-    msg.data=seher_obj.failure_counter_;
+    msg.seq =seher_obj.failure_counter_;
     pub_fail.publish(msg);
     ROS_INFO_STREAM("----------------------SEQ " << seq++ << "-------------------------------------");
   }

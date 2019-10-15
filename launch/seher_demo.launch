@@ -4,5 +4,5 @@
  <arg name="prompts" default="true" />
  <arg name="max_trials" default="5" />
  <node name="seher_demo" pkg="ur_manipulation" type="seher_demo" respawn="false" output="screen" args="$(arg prompts) $(arg max_trials)"/>
-
+ <node name="tool_pose_publisher" pkg ="ur_manipulation" type="tool_pose_publisher.py" output="screen"/>
 </launch>
