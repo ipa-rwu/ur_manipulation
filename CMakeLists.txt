@@ -76,3 +76,6 @@ install(TARGETS learning DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 add_executable(seher_demo src/seher_demo.cpp)
 target_link_libraries(seher_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+add_executable(benchmark_mqtt src/benchmark_mqtt.cpp)
+target_link_libraries(benchmark_mqtt ${catkin_LIBRARIES} ${Boost_LIBRARIES})

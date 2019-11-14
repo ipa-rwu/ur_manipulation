@@ -1,0 +1,28 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/ur5-demo/ur2_ws/devel/include/**",
+        "/home/ur5-demo/rs_workspace/devel/include/**",
+        "/home/ur5-demo/ur_workspace/devel/include/**",
+        "/opt/ros/melodic/include/**",
+        "/home/ur5-demo/ur2_ws/src/Universal_Robots_ROS_Driver/controller_stopper/include/**",
+        "/home/ur5-demo/rs_workspace/src/ddynamic_reconfigure/include/**",
+        "/home/ur5-demo/rs_workspace/src/realsense-ros/realsense2_camera/include/**",
+        "/home/ur5-demo/ur2_ws/src/Universal_Robots_ROS_Driver/ur_calibration/include/**",
+        "/home/ur5-demo/ur2_ws/src/Universal_Robots_ROS_Driver/ur_controllers/include/**",
+        "/home/ur5-demo/ur2_ws/src/universal_robot/ur_kinematics/include/**",
+        "/home/ur5-demo/ur2_ws/src/ur_manipulation/include/**",
+        "/home/ur5-demo/ur_workspace/src/ur_modern_driver/include/**",
+        "/home/ur5-demo/ur2_ws/src/Universal_Robots_ROS_Driver/ur_robot_driver/include/**",
+        "/home/ur5-demo/ur_workspace/src/universal_robots_ros_driver/ur_rtde_driver/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ]
+}

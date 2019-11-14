@@ -13,6 +13,7 @@
 #include <std_msgs/Header.h>
 #include <std_msgs/Int64.h>
 
+
 void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll,double& pitch, double& yaw)
 {
   tf::Quaternion quat;
@@ -30,11 +31,12 @@ SeherDemo::SeherDemo()  :
 
 }
 
-SeherDemo::SeherDemo(int max_trials, std::string user_prompts)
+SeherDemo::SeherDemo(int max_trials, std::string user_prompts, ros::NodeHandle nh)
 {
   this->max_trials = max_trials;
   this->user_prompts =  (user_prompts=="True"|| user_prompts=="true")? true : false;
   ROS_INFO_STREAM("User prompts : " << this->user_prompts << " | Max planning trials : " << max_trials);
+  mqtt_subscriber = nh.subscribe<std_msgs::String>("/referee/start/pickplace", 1000, boost::bind(&SeherDemo::mqtt_Callback,this, _1));
 }
 
 SeherDemo::~SeherDemo() {}
@@ -613,6 +615,31 @@ void SeherDemo::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double he
   ROS_INFO("---------------------------");
 }
 
+void SeherDemo::mqtt_Callback(const std_msgs::String::ConstPtr& mqtt_msg)
+/**
+  *
+  */
+{
+  // msg: {"data": "start"}
+  std::string msg;
+  msg = mqtt_msg->data.c_str();
+  //ROS_INFO("I heard: [%s]", msg);
+  Json::Reader reader;
+  Json::Value obj;
+  reader.parse(msg, obj); // Reader can also read strings
+  std::string referee_cmd;
+  referee_cmd = obj["data"].asString();
+//  if (referee_cmd == "start")
+  ROS_INFO_STREAM("Mqtt callback heard : " << mqtt_msg->data);
+  if(mqtt_msg->data=="start")
+  {
+    ROS_INFO("Start Picking and Place task" );
+    this->mutex_mqtt_referee_.lock();
+    this->tag_referee = 1;
+    this->mutex_mqtt_referee_.unlock();
+  }
+}
+
 moveit::planning_interface::MoveGroupInterface::Plan SeherDemo::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials=3, std::string display_name="target pose")
 {
   namespace rvt = rviz_visual_tools;
@@ -659,14 +686,26 @@ int main(int argc, char **argv)
   ros::Publisher planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
   ros::Publisher pub_seq = nh.advertise<std_msgs::Header>("/ur_manipulation/sequence",1);
   ros::Publisher pub_fail = nh.advertise<std_msgs::Header>("/ur_manipulation/failure_counter",1);
+  ros::Publisher pub_mqtt = nh.advertise<std_msgs::String>("/ur5/state/pickplace",1);
 
-  SeherDemo seher_obj(atoi(argv[2]),argv[1]);
+  SeherDemo seher_obj(atoi(argv[2]),argv[1], nh);
   seher_obj.initialiseMoveit(nh);
   seher_obj.printBasicInfo();
   ROS_INFO("---------------------------");
   seher_obj.addCollissionObjects();
   ROS_INFO("Moving to home pose");
   seher_obj.moveToNamedTarget("home");
+
+//  int tag_referee;
+//  tag_referee = seher_obj.tag_referee;
+//  tag_referee = 0;
+
+  seher_obj.mutex_mqtt_referee_.lock();
+  seher_obj.tag_referee=0;
+  seher_obj.mutex_mqtt_referee_.unlock();
+
+
+
 
   ROS_INFO("Starting PnP");
   ROS_INFO("---------------------------");
@@ -684,11 +723,24 @@ int main(int argc, char **argv)
   //target_pose1.position.x = 0.05;
   target_pose1.position.x = -0.3;
 
+  std_msgs::String to_referee_msg;
+  std::string ss = "{\"state\":\"ready\"}" ;
+  to_referee_msg.data = ss;
+  pub_mqtt.publish(to_referee_msg);
+
   int seq = 0;
   bool switcher=false;
-
+  ROS_INFO("tag_reeree: %i", seher_obj.tag_referee);
   while(ros::ok())
   {
+    seher_obj.mutex_mqtt_referee_.lock();
+    if (!seher_obj.tag_referee ==1)
+    {
+      continue;
+    }
+    seher_obj.mutex_mqtt_referee_.unlock();
+
+
     ROS_INFO_STREAM("----------------------SEQ " << seq << "-------------------------------------");
     seher_obj.pickAtPoseFromHeight((switcher)?target_pose1:target_pose2, 0.03, nh);
     seher_obj.placeAtPoseFromHeight((switcher)?target_pose2:target_pose1, 0.03, nh);
