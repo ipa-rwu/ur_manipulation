@@ -4,17 +4,17 @@ This package provides only the control node and the gripper URDF for the demo.
 
 # Requirements
 
-1. `universal_robots`   
+<!--1. `universal_robots`
 Provides base robot description. Customised version to work with the gripper is available under master branch from:   
-`git clone https://github.com/ipa-kut/universal_robot.git`
+`git clone https://github.com/ipa-kut/universal_robot.git`-->
 2. `universal_robots_ros_driver`   
 This is a private repo under the ROS Industrial project which provides a more up-to-date driver for the UR5e series.
 A slightly modified version to work with the gripper is available under master branch from:   
 `git clone https://github.com/ipa-kut/universal_robots_ros_driver.git`   
 Once cloned, follow all setup isntructions from this package and verify the robot driver is working.   
-3. `ur_modern_driver`   
+<!--3. `ur_modern_driver`
 Package #2 builds upon this package, which can be used directly from the branch add-e-series-support:   
-`git clone https://github.com/plusone-robotics/ur_modern_driver.git -b add-e-series-support`   
+`git clone https://github.com/plusone-robotics/ur_modern_driver.git -b add-e-series-support`   -->
 4. `ur5e_egp50_moveit_config`   
 This is the custom built MoveIt! config folder for the robot+gripper. Use master branch from :      
 `git clone https://github.com/ipa-kut/ur5e_egp50_moveit_config.git`   
@@ -36,8 +36,9 @@ the terminal for RVIZ each time, or add it to .bashrc:
 # Bringup
 
 1. Start the robot driver with this :   
-`roslaunch ur_rtde_driver ur5e_bringup.launch robot_ip:=192.168.56.2`   
+`roslaunch ur_manipulation ur5e_bringup.launch`
 Once done, in the Teach Pendant, go to Program > URCaps > External Control and start this program.   
+Robot IP is hard coded in launch, change as needed.
 
 2. Start Moveit :   
 `roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch`   
