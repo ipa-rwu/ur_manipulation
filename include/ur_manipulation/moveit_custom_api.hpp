@@ -1,7 +1,7 @@
-#ifndef SEHER_DEMO_H
-#define SEHER_DEMO_H
+#ifndef MOVEIT_CUSTOM_API_HPP
+#define MOVEIT_CUSTOM_API_HPP
 
-//Includes
+
 #include "ros/ros.h"
 
 #include <moveit/move_group_interface/move_group_interface.h>
@@ -17,15 +17,16 @@
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
 #include <geometry_msgs/PoseStamped.h>
+#include <iostream>
 
 #include "ur_msgs/SetIO.h"
 
-class SeherDemo
+class MoveitCustomApi
 {
 public:
-  SeherDemo();
-  SeherDemo(int max_trials, std::string user_prompts);
-  ~SeherDemo();
+  MoveitCustomApi();
+  MoveitCustomApi(int max_trials, std::string user_prompts);
+  ~MoveitCustomApi();
 
   const std::string GROUP_MANIP = "manipulator";
   const std::string GROUP_GRIPP = "endeffector";
@@ -53,7 +54,7 @@ public:
   bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
   moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step=0.01, double jump_threshold = 0.0);
   void sleepSafeFor(double duration);
-  void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef, double jump_thresh);
+  void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef=0.001, double jump_thresh = 0.0);
   void executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label);
   void adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory);
 
@@ -75,4 +76,4 @@ private:
 };
 
 
-#endif // SEHER_DEMO_H
+#endif // MOVEIT_CUSTOM_API_HPP
