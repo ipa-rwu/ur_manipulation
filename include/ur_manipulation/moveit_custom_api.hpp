@@ -34,7 +34,7 @@ public:
 
   int max_trials;
   bool user_prompts;
-  int failure_counter_;
+  unsigned int failure_counter_;
   ros::Publisher planning_scene_diff_publisher;
   moveit::planning_interface::MoveGroupInterface *move_group;
 
@@ -47,8 +47,8 @@ public:
   void initialiseMoveit(ros::NodeHandle nh);
   bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
-  void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh);
-  void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh);
+  void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper=true);
+  void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper=true);
   void printBasicInfo();
   bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
   moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step=0.01, double jump_threshold = 0.0);

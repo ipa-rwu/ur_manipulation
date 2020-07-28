@@ -535,7 +535,7 @@ void MoveitCustomApi::executeCartesianTrajtoPose(geometry_msgs::Pose target, std
   exit(-1);
 }
 
-void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
+void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper)
 /** Assuming  the provided @param{target_pose}is the pose of the target object itself,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
  * then moves down to grasp it,
@@ -543,7 +543,7 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
  */
 {
   // Make sure gripper is open
-  gripperOpen(nh);
+   if (do_gripper)  gripperOpen(nh);
 
   // Go to a set height above given pose
   target_pose.position.z+=height;
@@ -566,7 +566,7 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   target_pose.position.z-=height;
   executeCartesianTrajtoPose(target_pose,"Pick Pose");
 //  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
-  gripperClose(nh);
+  if (do_gripper) gripperClose(nh);
   sleepSafeFor(0.5);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
@@ -578,7 +578,7 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   ROS_INFO("---------------------------");
 }
 
-void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh)
+void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper)
 /** Assuming  the provided @param{target_pose}is the pose of the place position,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
  * then moves down to place the object,
@@ -597,7 +597,7 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
 //  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Place Pose");
   ROS_INFO("---------------------------");
-  gripperOpen(nh);
+  if (do_gripper) gripperOpen(nh);
   sleepSafeFor(0.5);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
