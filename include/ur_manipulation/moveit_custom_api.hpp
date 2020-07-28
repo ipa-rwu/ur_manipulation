@@ -1,7 +1,7 @@
 #ifndef MOVEIT_CUSTOM_API_HPP
 #define MOVEIT_CUSTOM_API_HPP
 
-
+#include "ur_manipulation/endurance_test_logger.hpp"
 #include "ros/ros.h"
 
 #include <moveit/move_group_interface/move_group_interface.h>
