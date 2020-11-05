@@ -122,7 +122,7 @@ void MoveitCustomApi::executeCartesianTrajForWaypoints(std::vector<geometry_msgs
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
-    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::MEDIUM);
   visual_tools->trigger();
   if(user_prompts) visual_tools->prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
@@ -209,7 +209,7 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesi
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
-    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::SMALL);
+    visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::MEDIUM);
   visual_tools->trigger();
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
@@ -475,11 +475,11 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh)
   move_group = new moveit::planning_interface::MoveGroupInterface(GROUP_MANIP);
   joint_model_group = move_group->getCurrentState()->getJointModelGroup(GROUP_MANIP);
 
-  visual_tools = new moveit_visual_tools::MoveItVisualTools("base_link");
+  visual_tools = new moveit_visual_tools::MoveItVisualTools(move_group->getPlanningFrame().c_str());
   visual_tools->deleteAllMarkers();
   visual_tools->loadRemoteControl();
-  text_pose.translation().z() = 1.75;
-  visual_tools->publishText(text_pose, "Seher Demo", rvt::WHITE, rvt::XLARGE);
+  text_pose.translation().z() = 0.75;
+  visual_tools->publishText(text_pose, boost::to_upper_copy<std::string>(robot_name_), rvt::WHITE, rvt::XLARGE);
   visual_tools->trigger();
   planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
 
