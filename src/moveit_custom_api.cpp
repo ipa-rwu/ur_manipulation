@@ -1,11 +1,5 @@
 /// TODO:
-/// [x] Wrap moveToNamedPose in multiple trials as well
-/// [x] Try to merge plan and execute functions (and hence number of trial loops)
-/// [x] Incorporate gripper functionality
-/// [x] Change up and down motion from target pose movement to cartesian pose move to ensure smooth trajectory
-/// [] Try with moveit pick and place interface instead - Requires implementation of prismatic joints in URDF and controllers for the same
 /// [] Test the test piece collission object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
-
 
 #include "ur_manipulation/moveit_custom_api.hpp"
 
@@ -75,39 +69,10 @@ void MoveitCustomApi::executeCartesianTrajForWaypoints(std::vector<geometry_msgs
   {
     fraction = move_group->computeCartesianPath(waypoints, eef, jump_thresh, trajectory);
   }
-
-  ROS_INFO_STREAM("Visualizing Cartesian Path plan with waypoints (" << fraction*100  << "% acheived)");
-
-
-  std::vector<ros::Duration> times_from_start;
-    int iter=0;
-    for(auto x: trajectory.joint_trajectory.points)
-    {
-//      ROS_INFO_STREAM(iter++ << " point_time_from_start: " << x.time_from_start);
-      times_from_start.push_back(x.time_from_start);
-    }
-
-    // Adjust starting from point 2 i.e. index 1
-    for(int i=1; i< times_from_start.size();i++)
-    {
-
-      if(times_from_start[i]==ros::Duration(0) && i<times_from_start.size())
-      {
-        ros::Duration prev = times_from_start[i];
-        times_from_start[i] = ros::Duration((times_from_start[i-1].toSec()+times_from_start[i+1].toSec())/2.0);
-        ROS_WARN_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
-      }
-    }
-
-    for(int i=0; i< times_from_start.size(); i++)
-    {
-      trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
-  //    ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
-    }
-
-
+  adjustTrajectoryToFixTimeSequencing(trajectory);
 
   // Visualize the plan in RViz
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan with waypoints (" << fraction*100  << "% acheived)");
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
@@ -131,11 +96,7 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
   for(int i=0; i < times_from_start.size() ; i++)
   {
     times_from_start[i]= trajectory.joint_trajectory.points[i].time_from_start;
-//    ROS_INFO_STREAM("P: "  << i<< " time_from_start: " << times_from_start[i]);
   }
-
-//  ROS_INFO_STREAM("Size of time_from_start :" << times_from_start.size() << " trajectory points: " << trajectory.joint_trajectory.points.size());
-
 
   // Adjust starting from point 2 i.e. index 1
   bool adjusted_flag=false;
@@ -162,7 +123,6 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
     for(int i=0; i< times_from_start.size(); i++)
     {
       trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
-//      ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
     }
   }
 
@@ -182,19 +142,10 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesi
   {
     fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
   }
-
-  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
-
-//  trajectory.joint_trajectory.points.resize(5);
-//  trajectory.joint_trajectory.points[0].time_from_start = ros::Duration(0);
-//  trajectory.joint_trajectory.points[1].time_from_start = ros::Duration(0.1234);
-//  trajectory.joint_trajectory.points[2].time_from_start = ros::Duration(0);
-//  trajectory.joint_trajectory.points[3].time_from_start = ros::Duration(0.3456);
-//  trajectory.joint_trajectory.points[4].time_from_start = ros::Duration(0);
-
   adjustTrajectoryToFixTimeSequencing(trajectory);
 
   // Visualize the plan in RViz
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
@@ -214,13 +165,10 @@ void MoveitCustomApi::sleepSafeFor(double duration)
   {
     ros::spinOnce();
   }
-
 }
-
 
 bool MoveitCustomApi::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
-
   if(user_prompts)
   {
     std::string message = "Planning completed, press Next to execute";
@@ -476,7 +424,6 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh)
   visual_tools->publishText(text_pose, boost::to_upper_copy<std::string>(robot_name_), rvt::WHITE, rvt::XLARGE);
   visual_tools->trigger();
   planning_scene_diff_publisher = nh.advertise<moveit_msgs::PlanningScene>("planning_scene", 1);
-
 }
 
 void MoveitCustomApi::moveToNamedTarget(std::string target)
@@ -549,8 +496,6 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   }
   else
   {
-//    moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Pick Pose"));
-//    moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Pick Pose"));
     executeCartesianTrajtoPose(target_pose,"Pre Pick Pose");
   }
   ROS_INFO("---------------------------");
@@ -559,7 +504,6 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
   executeCartesianTrajtoPose(target_pose,"Pick Pose");
-//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   if (do_gripper) gripperClose(nh);
   sleepSafeFor(robot_settle_time_);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
@@ -567,7 +511,6 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
 
   // Go back up
   target_pose.position.z+=height;
-//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Pick Pose"));
   executeCartesianTrajtoPose(target_pose,"Post Pick Pose");
   ROS_INFO("---------------------------");
 }
@@ -581,14 +524,11 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
 {
   // Go to a set height above given pose
   target_pose.position.z+=height;
-//  moveGroupExecutePlan(getPlanToPoseTarget(target_pose, max_trials, "Pre Place Pose"));
-//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Pre Place Pose");
   ROS_INFO("---------------------------");
   sleepSafeFor(robot_settle_time_);
   // Go down and place the object
   target_pose.position.z-=height;
-//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Place Pose");
   ROS_INFO("---------------------------");
   if (do_gripper) gripperOpen(nh);
@@ -597,7 +537,6 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
 
   // Go back up
   target_pose.position.z+=height;
-//  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Post Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Post Place Pose");
   ROS_INFO("---------------------------");
 }
