@@ -24,11 +24,9 @@ class MoveitCustomApi
 {
 public:
   MoveitCustomApi();
-  MoveitCustomApi(int max_trials, std::string user_prompts);
+  MoveitCustomApi(std::string user_prompts);
   ~MoveitCustomApi();
 
-  const std::string GROUP_MANIP = "manipulator";
-  const std::string GROUP_GRIPP = "endeffector";
   const std::string COMMAND_ADD = "add";
   const std::string COMMAND_REMOVE = "remove";
 
@@ -64,6 +62,9 @@ private:
   moveit_visual_tools::MoveItVisualTools *visual_tools;
   Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
   const int IO_SERVICE_FUN_LEVEL_ = 1;   // Not exactly sure what this is, but 1 seems to work. If it fails, try 2.
+  std::string robot_name_;
+  std::string group_manip_;
+  double robot_settle_time_;
 
   const double BASE_OFFSET_FROM_BACK_WALL_ = 0.28;   //28cm
   const double BASE_OFFSET_FROM_LEFT_WALL_ = 0.46;   //46cm

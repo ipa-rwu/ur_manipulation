@@ -1,0 +1,4 @@
+robot: prbt
+group_manip: manipulator
+max_planning_attempts: 4
+robot_settle_time: 0.4

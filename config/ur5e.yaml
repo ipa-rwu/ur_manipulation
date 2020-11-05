@@ -1,0 +1,4 @@
+robot: ur5e
+group_manip: manipulator
+max_planning_attempts: 3
+robot_settle_time: 0.4

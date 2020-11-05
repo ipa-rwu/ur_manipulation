@@ -23,38 +23,27 @@ void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll
 
 
 MoveitCustomApi::MoveitCustomApi()  :
-  max_trials(5),
   user_prompts(true)
 {
 
 }
 
-MoveitCustomApi::MoveitCustomApi(int max_trials, std::string user_prompts)
+MoveitCustomApi::MoveitCustomApi(std::string user_prompts)
 {
-  this->max_trials = max_trials;
   this->user_prompts =  (user_prompts=="True"|| user_prompts=="true")? true : false;
-  ROS_INFO_STREAM("User prompts : " << this->user_prompts << " | Max planning trials : " << max_trials);
 }
 
 MoveitCustomApi::~MoveitCustomApi() {}
 
 void MoveitCustomApi::printBasicInfo()
 {
-  // Getting Basic Information
-  // ^^^^^^^^^^^^^^^^^^^^^^^^^
-  //
-  // We can print the name of the reference frame for this robot.
-  ROS_INFO_NAMED("tutorial", "Planning frame: %s", move_group->getPlanningFrame().c_str());
-
-  // We can also print the name of the end-effector link for this group.
-  ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group->getEndEffectorLink().c_str());
-
-  // We can get a list of all the groups in the robot:
-  ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
-  std::copy(move_group->getJointModelGroupNames().begin(), move_group->getJointModelGroupNames().end(),
-            std::ostream_iterator<std::string>(std::cout, ", "));
-  std::cout << std::endl;
-
+  ROS_INFO("------------------------------------------------------");
+  ROS_INFO_STREAM("Planning frame: " << move_group->getPlanningFrame().c_str());
+  ROS_INFO_STREAM("End effector link: " << move_group->getEndEffectorLink().c_str());
+  ROS_INFO_STREAM("User prompts : " << (this->user_prompts?"True":"False"));
+  ROS_INFO_STREAM("Max trials : " << this->max_trials);
+  ROS_INFO_STREAM("Robot settle time : " << this->robot_settle_time_);
+  ROS_INFO("------------------------------------------------------");
 }
 
 bool MoveitCustomApi::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion, double delta_orientation)
@@ -94,7 +83,7 @@ void MoveitCustomApi::executeCartesianTrajForWaypoints(std::vector<geometry_msgs
     int iter=0;
     for(auto x: trajectory.joint_trajectory.points)
     {
-      ROS_INFO_STREAM(iter++ << " point_time_from_start: " << x.time_from_start);
+//      ROS_INFO_STREAM(iter++ << " point_time_from_start: " << x.time_from_start);
       times_from_start.push_back(x.time_from_start);
     }
 
@@ -173,7 +162,7 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
     for(int i=0; i< times_from_start.size(); i++)
     {
       trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
-      ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
+//      ROS_INFO_STREAM("Recomputed time point " << i << " : " << trajectory.joint_trajectory.points[i].time_from_start );
     }
   }
 
@@ -418,7 +407,7 @@ bool MoveitCustomApi::gripperOpen(ros::NodeHandle nh)
   if(client.call(io_msg))
   {
     ROS_INFO_STREAM("Open gripper initialise : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
-    sleepSafeFor(0.5);
+    sleepSafeFor(robot_settle_time_);
     io_msg.request.state = 0;
     if(client.call(io_msg))
     {
@@ -449,7 +438,7 @@ bool MoveitCustomApi::gripperClose(ros::NodeHandle nh)
   if(client.call(io_msg))
   {
     ROS_INFO_STREAM("Close gripper initialise :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
-    sleepSafeFor(0.5);
+    sleepSafeFor(robot_settle_time_);
     io_msg.request.state = 0;
     if(client.call(io_msg))
     {
@@ -472,8 +461,13 @@ bool MoveitCustomApi::gripperClose(ros::NodeHandle nh)
 void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh)
 {
   namespace rvt = rviz_visual_tools;
-  move_group = new moveit::planning_interface::MoveGroupInterface(GROUP_MANIP);
-  joint_model_group = move_group->getCurrentState()->getJointModelGroup(GROUP_MANIP);
+  nh.param<std::string>("robot",robot_name_,"robot");
+  nh.param<std::string>("group_manip",group_manip_,"manip");
+  nh.param<int>("max_planning_attempts",max_trials,3);
+  nh.param<double>("robot_settle_time",robot_settle_time_,0.5);
+
+  move_group = new moveit::planning_interface::MoveGroupInterface(group_manip_);
+  joint_model_group = move_group->getCurrentState()->getJointModelGroup(group_manip_);
 
   visual_tools = new moveit_visual_tools::MoveItVisualTools(move_group->getPlanningFrame().c_str());
   visual_tools->deleteAllMarkers();
@@ -560,14 +554,14 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
     executeCartesianTrajtoPose(target_pose,"Pre Pick Pose");
   }
   ROS_INFO("---------------------------");
-  sleepSafeFor(0.5);
+  sleepSafeFor(robot_settle_time_);
 
   // Go down to reach and grasp the object
   target_pose.position.z-=height;
   executeCartesianTrajtoPose(target_pose,"Pick Pose");
 //  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pick Pose"));
   if (do_gripper) gripperClose(nh);
-  sleepSafeFor(0.5);
+  sleepSafeFor(robot_settle_time_);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
@@ -591,14 +585,14 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
 //  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Pre Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Pre Place Pose");
   ROS_INFO("---------------------------");
-  sleepSafeFor(0.5);
+  sleepSafeFor(robot_settle_time_);
   // Go down and place the object
   target_pose.position.z-=height;
 //  moveGroupExecutePlan(getCartesianPathPlanToPose(target_pose, "Place Pose"));
   executeCartesianTrajtoPose(target_pose,"Place Pose");
   ROS_INFO("---------------------------");
   if (do_gripper) gripperOpen(nh);
-  sleepSafeFor(0.5);
+  sleepSafeFor(robot_settle_time_);
 //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
