@@ -50,23 +50,23 @@ Robot IP is hard coded in launch, change as needed.
 4. Start this demonstrator node :    
 `roslaunch ur_manipulation seher_demo.launch`   
 
-## Simulation (does not include egp50 gripper)
+## Simulation
 
-> CAUTION: An update needs to be made to the default ur5e_moveit_config pkg of fmauch's fork to get it to work:
- ur5_e_moveit_config/launch/move_group.launch -     
+**CAUTION:** An update needs to be made to the default ur5e_moveit_config pkg of fmauch's fork to get it to work:
+*ur5_e_moveit_config/launch/move_group.launch* -
 Replace:  `move_group/MoveGroupExecuteService`    
 With:     `move_group/MoveGroupExecuteTrajectoryAction`
 
 Once done,
 
 1. Start the simulation like this :    
-`roslaunch ur_e_gazebo ur5e.launch`   
+`roslaunch ur5e_egp50_moveit_config gazebo.launch`
 
 2. Start moveit :    
-`roslaunch ur5_e_moveit_config ur5_e_moveit_planning_execution.launch sim:=true`   
+`roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch sim:=true`
 
 3. Start rviz :    
-`roslaunch ur5_e_moveit_config moveit_rviz.launch config:=true`   
+`roslaunch ur5e_egp50_moveit_config moveit_rviz.launch config:=true`
 
 4. Start this demonstrator node :       
 `roslaunch ur_manipulation seher_demo.launch`  
