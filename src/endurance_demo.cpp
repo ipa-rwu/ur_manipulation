@@ -32,8 +32,8 @@ int main(int argc, char **argv)
   seher_obj.printBasicInfo();
   ROS_INFO("---------------------------");
   seher_obj.addCollissionObjects();
-  ROS_INFO("Moving to home pose");
-  seher_obj.moveToNamedTarget("home");
+  ROS_INFO("Moving to ready pose");
+  seher_obj.moveToNamedTarget("ready");
   unsigned int seq = 0;
 
   ROS_INFO("Starting PnP");

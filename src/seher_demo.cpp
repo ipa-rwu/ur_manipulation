@@ -15,8 +15,8 @@ int main(int argc, char **argv)
   seher_obj.initialiseMoveit(nh);
   seher_obj.printBasicInfo();
   seher_obj.addCollissionObjects();
-  ROS_INFO("Moving to home pose");
-  seher_obj.moveToNamedTarget("home");
+  ROS_INFO("Moving to ready pose");
+  seher_obj.moveToNamedTarget("ready");
   int seq = 0;
 
   ROS_INFO("Starting PnP");
