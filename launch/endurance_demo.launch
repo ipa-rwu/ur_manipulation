@@ -4,6 +4,7 @@
  <arg name="prompts" default="true" />
  <arg name="robot" default="ur5e" />
  <rosparam file="$(find ur_manipulation)/config/$(arg robot).yaml"/>
- <node name="endurance_demo" pkg="ur_manipulation" type="endurance_demo" respawn="false" output="screen" args="$(arg prompts)"/>
+ <node name="endurance_demo" pkg="ur_manipulation" type="endurance_demo"
+    respawn="false" output="screen" args="$(arg prompts robot)"/>
  <node name="tool_pose_publisher" pkg ="ur_manipulation" type="tool_pose_publisher.py" output="screen"/>
 </launch>
