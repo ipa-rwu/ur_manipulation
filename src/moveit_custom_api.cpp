@@ -37,7 +37,11 @@ void MoveitCustomApi::printBasicInfo()
   ROS_INFO("------------------------------------------------------");
 }
 
-bool MoveitCustomApi::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion, double delta_orientation)
+bool MoveitCustomApi::
+      comparePoses(geometry_msgs::Pose pose1,
+                   geometry_msgs::Pose pose2,
+                   double delta_posistion,
+                   double delta_orientation)
 {
   tf::Quaternion q1, q2;
   tf::quaternionMsgToTF(pose1.orientation, q1);
@@ -61,7 +65,10 @@ bool MoveitCustomApi::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pos
   }
 }
 
-void MoveitCustomApi::executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef, double jump_thresh)
+void MoveitCustomApi::
+    executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints,
+                                     double eef,
+                                     double jump_thresh)
 {
   namespace rvt = rviz_visual_tools;
   moveit_msgs::RobotTrajectory trajectory;
@@ -106,7 +113,9 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
     {
       ros::Duration prev = times_from_start[i];
       times_from_start[i] = ros::Duration((times_from_start[i - 1].toSec() + times_from_start[i + 1].toSec()) / 2.0);
-      ROS_WARN_STREAM("Recomputing point " << i << " from " << prev << " to: " << times_from_start[i - 1] << " + " << times_from_start[i + 1] << " = " << times_from_start[i]);
+      ROS_WARN_STREAM("Recomputing point " << i << " from " << prev
+                      << " to: " << times_from_start[i - 1] << " + "
+                      << times_from_start[i + 1] << " = " << times_from_start[i]);
       adjusted_flag = true;
     }
   }
@@ -127,7 +136,11 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
   }
 }
 
-moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step, double jump_threshold)
+moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::
+getCartesianPathPlanToPose(geometry_msgs::Pose target_pose,
+                           std::string display_label,
+                           double eef_step,
+                           double jump_threshold)
 {
   namespace rvt = rviz_visual_tools;
   move_group->setStartStateToCurrentState();
@@ -296,7 +309,8 @@ void MoveitCustomApi::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string c
 {
   if (command != COMMAND_ADD && command != COMMAND_REMOVE)
   {
-    ROS_ERROR_STREAM("Unknown test piece collission object manipulation command : " << command << ". Expecting " << COMMAND_ADD << " or " << COMMAND_REMOVE);
+    ROS_ERROR_STREAM("Unknown test piece collision object manipulation command : "
+                     << command << ". Expecting " << COMMAND_ADD << " or " << COMMAND_REMOVE);
     return;
   }
 
@@ -322,7 +336,8 @@ void MoveitCustomApi::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string c
 
   attached_object.object.primitives.push_back(primitive1);
   attached_object.object.primitive_poses.push_back(box_pose1);
-  attached_object.object.operation = (command == COMMAND_ADD) ? attached_object.object.ADD : attached_object.object.REMOVE;
+  attached_object.object.operation =
+      (command == COMMAND_ADD) ? attached_object.object.ADD : attached_object.object.REMOVE;
 
   attached_object.touch_links = std::vector<std::string>{move_group->getEndEffectorLink(), "egp50_pincer_link"};
 
@@ -337,7 +352,8 @@ void MoveitCustomApi::checkTrialsLimit(int trials)
 {
   if (trials > max_trials)
   {
-    ROS_WARN_STREAM("Selected number of trials for execution : " << trials << ", is more than allowed max of : " << max_trials);
+    ROS_WARN_STREAM("Selected number of trials for execution : "
+                    << trials << ", is more than allowed max of : " << max_trials);
   }
 }
 
@@ -476,7 +492,10 @@ void MoveitCustomApi::executeCartesianTrajtoPose(geometry_msgs::Pose target, std
   exit(-1);
 }
 
-void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper)
+void MoveitCustomApi::
+  pickAtPoseFromHeight(geometry_msgs::Pose target_pose,
+                       double height, ros::NodeHandle nh,
+                       bool do_gripper)
 /** Assuming  the provided @param{target_pose}is the pose of the target object itself,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
  * then moves down to grasp it,
@@ -508,7 +527,7 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   if (do_gripper)
     gripperClose(nh);
   sleepSafeFor(robot_settle_time_);
-  //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
+  //  addOrRemoveTestPiececollisionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
   // Go back up
@@ -517,7 +536,11 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
   ROS_INFO("---------------------------");
 }
 
-void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper)
+void MoveitCustomApi::
+    placeAtPoseFromHeight(geometry_msgs::Pose target_pose,
+                          double height,
+                          ros::NodeHandle nh,
+                          bool do_gripper)
 /** Assuming  the provided @param{target_pose}is the pose of the place position,
  * the gripper first goes to the same XY lcoation, but at a height of @param{height} above it,
  * then moves down to place the object,
@@ -544,7 +567,10 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
   ROS_INFO("---------------------------");
 }
 
-moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials = 3, std::string display_name = "target pose")
+moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::
+      getPlanToPoseTarget(geometry_msgs::Pose target_pose,
+                          int trials = 3,
+                          std::string display_name = "target pose")
 {
   namespace rvt = rviz_visual_tools;
   checkTrialsLimit(trials);
