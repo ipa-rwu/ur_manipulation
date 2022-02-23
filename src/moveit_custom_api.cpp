@@ -476,13 +476,13 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh, std::string prompts)
   nh.param<int>("max_planning_attempts", max_trials, 3);
   nh.param<double>("robot_settle_time", robot_settle_time_, 0.5);
   // load parameters for collision objects
-  if (!(nh.getParam("collision/backwall", BASE_OFFSET_FROM_BACK_WALL_) ||
-        nh.getParam("collision/leftwall", BASE_OFFSET_FROM_LEFT_WALL_) ||
-        nh.getParam("collision/rightwall", BASE_OFFSET_FROM_RIGHT_WALL_) ||
+  if (!(nh.getParam("collision/backwall", BASE_OFFSET_FROM_BACK_WALL_) &&
+        nh.getParam("collision/leftwall", BASE_OFFSET_FROM_LEFT_WALL_) &&
+        nh.getParam("collision/rightwall", BASE_OFFSET_FROM_RIGHT_WALL_) &&
         nh.getParam("collision/bottom", BASE_OFFSET_FROM_BOTTOM_)))
     ROS_ERROR("Collision object not set");
-  if (!(nh.getParam("cell/x_dim", TOTAL_INNER_CELL_X_DIMENSION_) ||
-        nh.getParam("cell/y_dim", TOTAL_INNER_CELL_Y_DIMENSION_) ||
+  if (!(nh.getParam("cell/x_dim", TOTAL_INNER_CELL_X_DIMENSION_) &&
+        nh.getParam("cell/y_dim", TOTAL_INNER_CELL_Y_DIMENSION_) &&
         nh.getParam("cell/z_dim", TOTAL_INNER_CELL_Z_DIMENSION_)))
     ROS_ERROR("Cell dimension not set");
 
@@ -507,6 +507,8 @@ void MoveitCustomApi::moveToNamedTarget(std::string target)
   move_group->setNamedTarget(target);
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
+  move_group->setMaxAccelerationScalingFactor(0.5);
+  move_group->setMaxVelocityScalingFactor(0.6);
 
   int trials = 0;
   while (trials++ < max_trials)
