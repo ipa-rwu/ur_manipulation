@@ -4,23 +4,18 @@ This package provides only the control node and the gripper URDF for the demo.
 
 # Requirements
 
-<!--1. `universal_robots`
-Provides base robot description. Customised version to work with the gripper is available under master branch from:   
-`git clone https://github.com/ipa-kut/universal_robot.git`-->
 1. `universal_robots_ros_driver`
 This is the official ROS Industrial driver for the UR series.  
 `git clone https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git`
-Once cloned, follow all setup isntructions from this package and verify the robot driver is working.   
-<!--3. `ur_modern_driver`
-Package #2 builds upon this package, which can be used directly from the branch add-e-series-support:   
-`git clone https://github.com/plusone-robotics/ur_modern_driver.git -b add-e-series-support`   -->
+Once cloned, follow all setup isntructions from this package and verify the robot driver is working. This should also instruct you to clone Fmauch's universal robots package.   
+
 2. `ur5e_egp50_moveit_config`
 This is the custom built MoveIt! config folder for the robot+gripper. Use master branch from :      
 `git clone https://github.com/ipa-kut/ur5e_egp50_moveit_config.git`   
 
-Finally, clone this package as well into the workspace.   
+Finally, clone this `ur_manipulation` package as well into the same workspace as well.   
 
-Install all other requirements using:   
+From the workspace directory, install all other requirements using:   
 `rosdep install --from-paths src --ignore-src -r -y`   
 
 # Setup
@@ -34,7 +29,15 @@ the terminal for RVIZ each time, or add it to .bashrc:
 
 # Bringup
 
-## Real Robot:
+## Simulation + Moveit
+
+1. Start the sim:   
+`roslaunch ur_manipulation gazebo_ur5e_egp50.launch`   
+
+2. Start moveit + rviz:    
+`roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch sim:=true`   
+
+## Real Robot <TODO: UPDATE CODE AND DESCRIPTION FOR LATEST DRIVER>:
 
 1. Start the robot driver with this :   
 `roslaunch ur_manipulation ur5e_bringup.launch`   
@@ -49,35 +52,16 @@ Robot IP is hard coded in launch, change as needed.
 
 4. Start this demonstrator node :    
 `roslaunch ur_manipulation seher_demo.launch`   
-
-## Simulation
-
-**CAUTION:** An update needs to be made to the default ur5e_moveit_config pkg of fmauch's fork to get it to work:
+## Troublsehooting
+If having controller issues, try to alter the default ur5e_moveit_config pkg of fmauch's fork to get it to work:
 *ur5_e_moveit_config/launch/move_group.launch* -
 Replace:  `move_group/MoveGroupExecuteService`    
 With:     `move_group/MoveGroupExecuteTrajectoryAction`
-
-Once done,
-
-1. Start the simulation like this :    
-`roslaunch ur5e_egp50_moveit_config gazebo.launch`
-
-2. Start moveit :    
-`roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch sim:=true`
-
-3. Start rviz :    
-`roslaunch ur5e_egp50_moveit_config moveit_rviz.launch config:=true`
-
-4. Start this demonstrator node :       
-`roslaunch ur_manipulation seher_demo.launch`  
-
 ## RVIZ Demo
 
 For rapid prototyping of some manipulation code, you can run a "light" version of the robot for visualization purposes only, This does not launch a sim or use any controllers, and therefore may not reflect real behaviour.
 
 `roslaunch ur5e_egp50_moveit_config demo.launch `
-
-
 
 # Notes
 Current state of the demonstrator :   
@@ -86,12 +70,5 @@ Current state of the demonstrator :
 3. The test piece is assumed to be a cube of fixed size, which is loaded and unloaded in/from the planning
 scene only between the post pick and place states.      
 
-
 # TODO
 [] Test piece should be present in the planning scene throughout the demo.    
-
-
-
-
-
-
