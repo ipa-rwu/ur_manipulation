@@ -410,7 +410,7 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh)
 {
   namespace rvt = rviz_visual_tools;
   nh.param<std::string>("robot",robot_name_,"robot");
-  nh.param<std::string>("group_manip",group_manip_,"manip");
+  nh.param<std::string>("group_manip",group_manip_,"manipulator");
   nh.param<int>("max_planning_attempts",max_trials,3);
   nh.param<double>("robot_settle_time",robot_settle_time_,0.5);
 
