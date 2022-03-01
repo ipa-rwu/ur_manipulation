@@ -40,7 +40,7 @@ set(THIS_PACKAGE_INCLUDE_DIRS
 
 catkin_package(
   LIBRARIES
-    interactivity_utils
+    moveit_custom_api
   INCLUDE_DIRS
     ${THIS_PACKAGE_INCLUDE_DIRS}
     include
@@ -57,14 +57,16 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
 )
-###########
-## Build ##
-###########
 
 include_directories(SYSTEM ${THIS_PACKAGE_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
 include_directories(${catkin_INCLUDE_DIRS})
 link_directories(${catkin_LIBRARY_DIRS})
 
+add_library(moveit_custom_api
+   src/moveit_custom_api.cpp
+ )
+add_dependencies(moveit_custom_api ${catkin_EXPORTED_TARGETS})
+target_link_libraries(moveit_custom_api ${catkin_LIBRARIES})
 
 add_executable(move_group_interface_tutorial_ur src/move_group_interface_tutorial_ur.cpp)
 target_link_libraries(move_group_interface_tutorial_ur ${catkin_LIBRARIES} ${Boost_LIBRARIES})
@@ -79,9 +81,3 @@ add_executable(seher_demo src/seher_demo.cpp
                           src/moveit_custom_api.cpp
                           )
 target_link_libraries(seher_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
-
-add_executable(endurance_demo src/endurance_demo.cpp
-                          src/moveit_custom_api.cpp
-                          src/endurance_test_logger.cpp
-                          )
-target_link_libraries(endurance_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
