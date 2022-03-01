@@ -29,7 +29,7 @@ the terminal for RVIZ each time, or add it to .bashrc:
 
 # Bringup
 
-## Simulation + Moveit
+## UR5e: Simulation + Moveit
 
 1. Start the sim:   
 `roslaunch ur_manipulation gazebo_ur5e_egp50.launch`   
@@ -37,26 +37,27 @@ the terminal for RVIZ each time, or add it to .bashrc:
 2. Start moveit + rviz:    
 `roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch sim:=true`   
 
-## Real Robot <TODO: UPDATE CODE AND DESCRIPTION FOR LATEST DRIVER>:
+## UR5e: Real Robot:
 
 1. Start the robot driver with this :   
 `roslaunch ur_manipulation ur5e_bringup.launch`   
-Once done, in the Teach Pendant, go to Program > URCaps > External Control and start this program.   
+Once done, in the Teach Pendant, go to Program > URCaps and tap on External Control to add it to the program.    
+Start this program by pressing the play button at the bottom, verify in the driver launch window if this was recognised.     
 Robot IP is hard coded in launch, change as needed.
 
-2. Start Moveit :   
+2. Start Moveit + RVIZ :   
 `roslaunch ur5e_egp50_moveit_config ur5e_egp50_moveit_planning_execution.launch`   
 
-3. Start Rviz (required if user prompts are enabled in compile time) :    
-`roslaunch ur5e_egp50_moveit_config moveit_rviz.launch`   
+3. Start this demonstrator node :    
+`roslaunch ur_manipulation seher_demo.launch`  
 
-4. Start this demonstrator node :    
-`roslaunch ur_manipulation seher_demo.launch`   
 ## Troublsehooting
+
 If having controller issues, try to alter the default ur5e_moveit_config pkg of fmauch's fork to get it to work:
 *ur5_e_moveit_config/launch/move_group.launch* -
 Replace:  `move_group/MoveGroupExecuteService`    
 With:     `move_group/MoveGroupExecuteTrajectoryAction`
+
 ## RVIZ Demo
 
 For rapid prototyping of some manipulation code, you can run a "light" version of the robot for visualization purposes only, This does not launch a sim or use any controllers, and therefore may not reflect real behaviour.
