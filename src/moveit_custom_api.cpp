@@ -42,20 +42,25 @@ void MoveitCustomApi::printBasicInfo()
 
 bool MoveitCustomApi::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion, double delta_orientation)
 {
+  tf::Quaternion q1, q2;
+  tf::quaternionMsgToTF(pose1.orientation, q1);
+  tf::quaternionMsgToTF(pose2.orientation, q2);
 
   if (  abs(pose1.position.x-pose2.position.x ) <= delta_posistion
         && abs(pose1.position.y-pose2.position.y ) <= delta_posistion
         && abs(pose1.position.z-pose2.position.z ) <= delta_posistion
-        && abs(pose1.orientation.x - pose2.orientation.x) <= delta_orientation
-        && abs(pose1.orientation.y - pose2.orientation.y) <= delta_orientation
-        && abs(pose1.orientation.z - pose2.orientation.z) <= delta_orientation
-        && abs(pose1.orientation.w - pose2.orientation.w) <= delta_orientation
+        && tf::angleShortestPath(q1, q2) <= delta_orientation
      )
   {
     return true;
   }
   else
   {
+    ROS_WARN_STREAM("Expected delty pos " << delta_posistion << " vs actual (" <<
+                    abs(pose1.position.x-pose2.position.x ) << ", " <<
+                    abs(pose1.position.y-pose2.position.y ) << ", " <<
+                    abs(pose1.position.z-pose2.position.z ) << ")");
+    ROS_WARN_STREAM("Expected delta ori " << delta_orientation << " vs actual " << tf::angleShortestPath(q1, q2));
     return false;
   }
 }
