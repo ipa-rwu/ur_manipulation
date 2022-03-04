@@ -411,8 +411,10 @@ bool MoveitCustomApi::gripperClose(ros::NodeHandle nh)
   }
 }
 
-void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh)
+void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh, std::string prompts)
 {
+  user_prompts =  (prompts=="True"|| prompts=="true")? true : false;
+  failure_counter_ = 0;
   namespace rvt = rviz_visual_tools;
   nh.param<std::string>("robot",robot_name_,"robot");
   nh.param<std::string>("group_manip",group_manip_,"manipulator");
