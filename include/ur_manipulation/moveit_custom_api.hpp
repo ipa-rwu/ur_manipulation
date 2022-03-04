@@ -41,7 +41,7 @@ public:
   bool gripperClose(ros::NodeHandle nh);
   bool gripperOpen(ros::NodeHandle nh);
   moveit::planning_interface::MoveGroupInterface::Plan getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
-  void initialiseMoveit(ros::NodeHandle nh);
+  void initialiseMoveit(ros::NodeHandle nh, std::string prompts="true");
   bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
   void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper=true);
