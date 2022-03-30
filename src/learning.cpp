@@ -47,7 +47,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "learning");
   ros::NodeHandle node_handle;
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
   // Raw pointers are frequently used to refer to the planning group for improved performance.
-  const robot_state::JointModelGroup* joint_model_group =
+  const robot_state::JointModelGroup *joint_model_group =
       move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
 
   // Visualization
@@ -107,10 +107,9 @@ int main(int argc, char** argv)
   ROS_INFO_NAMED("tutorial", "End effector link: %s", move_group.getEndEffectorLink().c_str());
 
   // We can get a list of all the groups in the robot:
-    ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
-    std::copy(move_group.getJointModelGroupNames().begin(), move_group.getJointModelGroupNames().end(),
-              std::ostream_iterator<std::string>(std::cout, ", "));
-
+  ROS_INFO_NAMED("tutorial", "Available Planning Groups:");
+  std::copy(move_group.getJointModelGroupNames().begin(), move_group.getJointModelGroupNames().end(),
+            std::ostream_iterator<std::string>(std::cout, ", "));
 
   // ADDING COLLISSION OBJECTS OF WORLD
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -211,8 +210,6 @@ int main(int argc, char** argv)
   visual_tools.trigger();
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-
   // MOVE TO UP POSITION
   // ^^^^^^^^^^^^^^^^^^^^^^^^^
   visual_tools.prompt("Moving to starting pose up, press Next to continue");
@@ -259,12 +256,12 @@ int main(int argc, char** argv)
     // Visualizing plans
     // ^^^^^^^^^^^^^^^^^
     // We can also visualize the plan as a line with markers in RViz.
-//    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
+    //    ROS_INFO_NAMED("tutorial", "Visualizing plan 1 as trajectory line");
     visual_tools.publishAxisLabeled(target_pose1, "pose1");
     visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
     visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
     visual_tools.trigger();
-    ROS_INFO("Plan Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED" );
+    ROS_INFO("Plan Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED");
     if (success)
     {
       ROS_INFO_STREAM("Succeeded plan, continuing to execute");
@@ -285,8 +282,8 @@ int main(int argc, char** argv)
 
   while (trials++ < MAX_TRIALS)
   {
-    exec_succeed = (move_group.move()==moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED" );
+    exec_succeed = (move_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED");
     if (exec_succeed)
     {
       ROS_INFO_STREAM("Execution succeeded");
@@ -321,12 +318,12 @@ int main(int argc, char** argv)
     // Visualizing plans
     // ^^^^^^^^^^^^^^^^^
     // We can also visualize the plan as a line with markers in RViz.
-//    ROS_INFO_NAMED("tutorial", "Visualizing plan 2 as trajectory line");
+    //    ROS_INFO_NAMED("tutorial", "Visualizing plan 2 as trajectory line");
     visual_tools.publishAxisLabeled(target_pose1, "pose1");
     visual_tools.publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
     visual_tools.publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
     visual_tools.trigger();
-    ROS_INFO("Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED" );
+    ROS_INFO("Attemp %d of %d : %s", trials, MAX_TRIALS, success ? "SUCCESS" : "FAILED");
     if (success)
     {
       ROS_INFO_STREAM("Succeeded plan, continuing to execute");
@@ -347,8 +344,8 @@ int main(int argc, char** argv)
 
   while (trials++ < MAX_TRIALS)
   {
-    exec_succeed = (move_group.move()==moveit::planning_interface::MoveItErrorCode::SUCCESS);
-    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED" );
+    exec_succeed = (move_group.move() == moveit::planning_interface::MoveItErrorCode::SUCCESS);
+    ROS_INFO("Execution Attemp %d of %d : %s", trials, MAX_TRIALS, exec_succeed ? "SUCCESS" : "FAILED");
     if (exec_succeed)
     {
       ROS_INFO_STREAM("Execution succeeded");
@@ -363,8 +360,6 @@ int main(int argc, char** argv)
       ROS_ERROR_STREAM("Execution failed, consider quitting");
     }
   }
-
-
 
   /*
 

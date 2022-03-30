@@ -6,25 +6,22 @@
 #include <std_msgs/Header.h>
 #include <std_msgs/Int64.h>
 
-void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double& roll,double& pitch, double& yaw)
+void getRPYFromQuaternionMSG(geometry_msgs::Quaternion orientation, double &roll, double &pitch, double &yaw)
 {
   tf::Quaternion quat;
-  tf::quaternionMsgToTF(orientation,quat);
+  tf::quaternionMsgToTF(orientation, quat);
   quat.normalize();
   tf::Matrix3x3 mat(quat);
-  mat.getRPY(roll, pitch,yaw);
+  mat.getRPY(roll, pitch, yaw);
 }
 
-
-MoveitCustomApi::MoveitCustomApi()  :
-  user_prompts(true)
+MoveitCustomApi::MoveitCustomApi() : user_prompts(true)
 {
-
 }
 
 MoveitCustomApi::MoveitCustomApi(std::string user_prompts)
 {
-  this->user_prompts =  (user_prompts=="True"|| user_prompts=="true")? true : false;
+  this->user_prompts = (user_prompts == "True" || user_prompts == "true") ? true : false;
 }
 
 MoveitCustomApi::~MoveitCustomApi() {}
@@ -34,7 +31,7 @@ void MoveitCustomApi::printBasicInfo()
   ROS_INFO("------------------------------------------------------");
   ROS_INFO_STREAM("Planning frame: " << move_group->getPlanningFrame().c_str());
   ROS_INFO_STREAM("End effector link: " << move_group->getEndEffectorLink().c_str());
-  ROS_INFO_STREAM("User prompts : " << (this->user_prompts?"True":"False"));
+  ROS_INFO_STREAM("User prompts : " << (this->user_prompts ? "True" : "False"));
   ROS_INFO_STREAM("Max trials : " << this->max_trials);
   ROS_INFO_STREAM("Robot settle time : " << this->robot_settle_time_);
   ROS_INFO("------------------------------------------------------");
@@ -46,20 +43,19 @@ bool MoveitCustomApi::comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pos
   tf::quaternionMsgToTF(pose1.orientation, q1);
   tf::quaternionMsgToTF(pose2.orientation, q2);
 
-  if (  abs(pose1.position.x-pose2.position.x ) <= delta_posistion
-        && abs(pose1.position.y-pose2.position.y ) <= delta_posistion
-        && abs(pose1.position.z-pose2.position.z ) <= delta_posistion
-        && tf::angleShortestPath(q1, q2) <= delta_orientation
-     )
+  if (abs(pose1.position.x - pose2.position.x) <= delta_posistion &&
+      abs(pose1.position.y - pose2.position.y) <= delta_posistion &&
+      abs(pose1.position.z - pose2.position.z) <= delta_posistion &&
+      abs(pose1.orientation.x - pose2.orientation.x) <= delta_orientation &&
+      abs(pose1.orientation.y - pose2.orientation.y) <= delta_orientation &&
+      abs(pose1.orientation.z - pose2.orientation.z) <= delta_orientation &&
+      abs(pose1.orientation.w - pose2.orientation.w) <= delta_orientation)
   {
     return true;
   }
   else
   {
-    ROS_WARN_STREAM("Expected delty pos " << delta_posistion << " vs actual (" <<
-                    abs(pose1.position.x-pose2.position.x ) << ", " <<
-                    abs(pose1.position.y-pose2.position.y ) << ", " <<
-                    abs(pose1.position.z-pose2.position.z ) << ")");
+    ROS_WARN_STREAM("Expected delty pos " << delta_posistion << " vs actual (" << abs(pose1.position.x - pose2.position.x) << ", " << abs(pose1.position.y - pose2.position.y) << ", " << abs(pose1.position.z - pose2.position.z) << ")");
     ROS_WARN_STREAM("Expected delta ori " << delta_orientation << " vs actual " << tf::angleShortestPath(q1, q2));
     return false;
   }
@@ -69,28 +65,27 @@ void MoveitCustomApi::executeCartesianTrajForWaypoints(std::vector<geometry_msgs
 {
   namespace rvt = rviz_visual_tools;
   moveit_msgs::RobotTrajectory trajectory;
-  double fraction=0.0;
-  while(fraction<0.5)
+  double fraction = 0.0;
+  while (fraction < 0.5)
   {
     fraction = move_group->computeCartesianPath(waypoints, eef, jump_thresh, trajectory);
   }
   adjustTrajectoryToFixTimeSequencing(trajectory);
 
   // Visualize the plan in RViz
-  ROS_INFO_STREAM("Visualizing Cartesian Path plan with waypoints (" << fraction*100  << "% acheived)");
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan with waypoints (" << fraction * 100 << "% acheived)");
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
     visual_tools->publishAxisLabeled(waypoints[i], "pt" + std::to_string(i), rvt::MEDIUM);
   visual_tools->trigger();
-  if(user_prompts) visual_tools->prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
+  if (user_prompts)
+    visual_tools->prompt("Press 'next' in the RvizVisualToolsGui window to continue the demo");
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   my_plan.trajectory_ = trajectory;
   move_group->execute(my_plan);
-
 }
-
 
 void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory)
 {
@@ -98,39 +93,38 @@ void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTraj
   std::vector<ros::Duration> times_from_start;
   times_from_start.resize(trajectory.joint_trajectory.points.size());
 
-  for(int i=0; i < times_from_start.size() ; i++)
+  for (int i = 0; i < times_from_start.size(); i++)
   {
-    times_from_start[i]= trajectory.joint_trajectory.points[i].time_from_start;
+    times_from_start[i] = trajectory.joint_trajectory.points[i].time_from_start;
   }
 
   // Adjust starting from point 2 i.e. index 1
-  bool adjusted_flag=false;
-  for(int i=1; i< times_from_start.size()-1;i++)
+  bool adjusted_flag = false;
+  for (int i = 1; i < times_from_start.size() - 1; i++)
   {
-    if(times_from_start[i]==ros::Duration(0))
+    if (times_from_start[i] == ros::Duration(0))
     {
       ros::Duration prev = times_from_start[i];
-      times_from_start[i] = ros::Duration((times_from_start[i-1].toSec()+times_from_start[i+1].toSec())/2.0);
-      ROS_WARN_STREAM("Recomputing point " << i << " from " << prev <<  " to: " << times_from_start[i-1] << " + " << times_from_start[i+1] << " = " <<times_from_start[i]);
-      adjusted_flag=true;
+      times_from_start[i] = ros::Duration((times_from_start[i - 1].toSec() + times_from_start[i + 1].toSec()) / 2.0);
+      ROS_WARN_STREAM("Recomputing point " << i << " from " << prev << " to: " << times_from_start[i - 1] << " + " << times_from_start[i + 1] << " = " << times_from_start[i]);
+      adjusted_flag = true;
     }
   }
 
-  if( times_from_start.size()>1 &&  times_from_start[times_from_start.size()-1] == ros::Duration(0))
+  if (times_from_start.size() > 1 && times_from_start[times_from_start.size() - 1] == ros::Duration(0))
   {
     ROS_WARN_STREAM("Final point in trajectory has 0 timestamp, incrementing logically");
-    times_from_start[times_from_start.size()-1] = times_from_start[times_from_start.size()-2] + ros::Duration(0.1);
-    adjusted_flag=true;
+    times_from_start[times_from_start.size() - 1] = times_from_start[times_from_start.size() - 2] + ros::Duration(0.1);
+    adjusted_flag = true;
   }
 
-  if(adjusted_flag)
+  if (adjusted_flag)
   {
-    for(int i=0; i< times_from_start.size(); i++)
+    for (int i = 0; i < times_from_start.size(); i++)
     {
       trajectory.joint_trajectory.points[i].time_from_start = times_from_start[i];
     }
   }
-
 }
 
 moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step, double jump_threshold)
@@ -142,15 +136,15 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesi
   waypoints.push_back(target_pose);
 
   moveit_msgs::RobotTrajectory trajectory;
-  double fraction=0.0;
-  while(fraction<0.5)
+  double fraction = 0.0;
+  while (fraction < 0.5)
   {
     fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
   }
   adjustTrajectoryToFixTimeSequencing(trajectory);
 
   // Visualize the plan in RViz
-  ROS_INFO_STREAM("Visualizing Cartesian Path plan to "  <<  display_label <<" (" << fraction*100  << "% acheived)");
+  ROS_INFO_STREAM("Visualizing Cartesian Path plan to " << display_label << " (" << fraction * 100 << "% acheived)");
   visual_tools->deleteAllMarkers();
   visual_tools->publishText(text_pose, "Cartesian path", rvt::WHITE, rvt::XLARGE);
   for (std::size_t i = 0; i < waypoints.size(); ++i)
@@ -160,13 +154,12 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getCartesi
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   my_plan.trajectory_ = trajectory;
   return my_plan;
-
 }
 
 void MoveitCustomApi::sleepSafeFor(double duration)
 {
   ros::Time start = ros::Time::now();
-  while(ros::Time::now() - start <= ros::Duration(duration))
+  while (ros::Time::now() - start <= ros::Duration(duration))
   {
     ros::spinOnce();
   }
@@ -174,14 +167,15 @@ void MoveitCustomApi::sleepSafeFor(double duration)
 
 bool MoveitCustomApi::moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan)
 {
-  if(user_prompts)
+  if (user_prompts)
   {
     std::string message = "Planning completed, press Next to execute";
     visual_tools->prompt(message);
   }
 
   move_group->setStartStateToCurrentState();
-  return move_group->execute(my_plan)==moveit::planning_interface::MoveItErrorCode::SUCCESS;;
+  return move_group->execute(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS;
+  ;
 }
 
 void MoveitCustomApi::addCollissionObjects()
@@ -203,20 +197,19 @@ void MoveitCustomApi::addCollissionObjects()
   // Define a pose for the box (specified relative to frame_id)
   geometry_msgs::Pose box_pose;
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;  // Not perfectly symmetrical.
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
-  box_pose.position.z = -0.01; //Push it slightly down to avoid collission with base plate.
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2; // Not perfectly symmetrical.
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;   // Base is ofset by (0.1470/2-.275)
+  box_pose.position.z = -0.01;                                                             // Push it slightly down to avoid collission with base plate.
 
   // Since we are attaching the object to the robot base
   // we want the collision checker to ignore collisions between the object and the robot base
-  object.touch_links = std::vector<std::string>{ "base_link"};
+  object.touch_links = std::vector<std::string>{"base_link"};
   moveit_msgs::PlanningScene planning_scene;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
   object.object.primitive_poses.push_back(box_pose);
   planning_scene.world.collision_objects.push_back(object.object);
-
 
   // The id of the object is used to identify it.
   object.object.id = "Cieling";
@@ -228,8 +221,8 @@ void MoveitCustomApi::addCollissionObjects()
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;  // Not perfectly symmetrical.
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_; // Base is ofset by (0.1470/2-.275)
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2; // Not perfectly symmetrical.
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;   // Base is ofset by (0.1470/2-.275)
   box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION;
 
   object.object.operation = object.object.ADD;
@@ -238,7 +231,7 @@ void MoveitCustomApi::addCollissionObjects()
   planning_scene.world.collision_objects.push_back(object.object);
 
   // The id of the object is used to identify it.
-  object.object.id  = "Left Wall";
+  object.object.id = "Left Wall";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
@@ -248,8 +241,8 @@ void MoveitCustomApi::addCollissionObjects()
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = BASE_OFFSET_FROM_RIGHT_WALL_;
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -267,8 +260,8 @@ void MoveitCustomApi::addCollissionObjects()
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -BASE_OFFSET_FROM_LEFT_WALL_;
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_/2-BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -285,15 +278,14 @@ void MoveitCustomApi::addCollissionObjects()
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
-  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_-BASE_OFFSET_FROM_RIGHT_WALL_)/2;
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2;
   box_pose.position.y = -BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION/2;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
   object.object.primitive_poses.push_back(box_pose);
   planning_scene.world.collision_objects.push_back(object.object);
-
 
   planning_scene.is_diff = true;
   planning_scene_diff_publisher.publish(planning_scene);
@@ -302,7 +294,7 @@ void MoveitCustomApi::addCollissionObjects()
 
 void MoveitCustomApi::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string command)
 {
-  if(command!= COMMAND_ADD && command!= COMMAND_REMOVE)
+  if (command != COMMAND_ADD && command != COMMAND_REMOVE)
   {
     ROS_ERROR_STREAM("Unknown test piece collission object manipulation command : " << command << ". Expecting " << COMMAND_ADD << " or " << COMMAND_REMOVE);
     return;
@@ -326,13 +318,13 @@ void MoveitCustomApi::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string c
   box_pose1.orientation.w = 1.0;
   box_pose1.position.x = 0.0;
   box_pose1.position.y = 0.0;
-  box_pose1.position.z = 0.01;  //Object Z dimension/2
+  box_pose1.position.z = 0.01; // Object Z dimension/2
 
   attached_object.object.primitives.push_back(primitive1);
   attached_object.object.primitive_poses.push_back(box_pose1);
-  attached_object.object.operation = (command== COMMAND_ADD) ? attached_object.object.ADD : attached_object.object.REMOVE;
+  attached_object.object.operation = (command == COMMAND_ADD) ? attached_object.object.ADD : attached_object.object.REMOVE;
 
-  attached_object.touch_links = std::vector<std::string>{ move_group->getEndEffectorLink(), "egp50_pincer_link" };
+  attached_object.touch_links = std::vector<std::string>{move_group->getEndEffectorLink(), "egp50_pincer_link"};
 
   moveit_msgs::PlanningScene planning_scene;
   planning_scene.robot_state.is_diff = true;
@@ -345,7 +337,7 @@ void MoveitCustomApi::checkTrialsLimit(int trials)
 {
   if (trials > max_trials)
   {
-    ROS_WARN_STREAM("Selected number of trials for execution : " << trials << ", is more than allowed max of : " <<max_trials );
+    ROS_WARN_STREAM("Selected number of trials for execution : " << trials << ", is more than allowed max of : " << max_trials);
   }
 }
 
@@ -353,18 +345,18 @@ bool MoveitCustomApi::gripperOpen(ros::NodeHandle nh)
 {
   ur_msgs::SetIO io_msg;
   io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
-  io_msg.request.pin = static_cast<int8_t>(1);  //Pin 1 is open
+  io_msg.request.pin = static_cast<int8_t>(1); // Pin 1 is open
   io_msg.request.state = 1;
   ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
 
-  if(client.call(io_msg))
+  if (client.call(io_msg))
   {
-    ROS_INFO_STREAM("Open gripper initialise : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+    ROS_INFO_STREAM("Open gripper initialise : " << ((io_msg.response.success == 0) ? "Failed" : "Succeeded"));
     sleepSafeFor(robot_settle_time_);
     io_msg.request.state = 0;
-    if(client.call(io_msg))
+    if (client.call(io_msg))
     {
-      ROS_INFO_STREAM("Open gripper conclude : " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+      ROS_INFO_STREAM("Open gripper conclude : " << ((io_msg.response.success == 0) ? "Failed" : "Succeeded"));
       return true;
     }
     else
@@ -384,18 +376,18 @@ bool MoveitCustomApi::gripperClose(ros::NodeHandle nh)
 {
   ur_msgs::SetIO io_msg;
   io_msg.request.fun = static_cast<int8_t>(IO_SERVICE_FUN_LEVEL_);
-  io_msg.request.pin = static_cast<int8_t>(0);    //Pin 0 is close
+  io_msg.request.pin = static_cast<int8_t>(0); // Pin 0 is close
   io_msg.request.state = 1;
   ros::ServiceClient client = nh.serviceClient<ur_msgs::SetIO>("/ur_hardware_interface/set_io");
 
-  if(client.call(io_msg))
+  if (client.call(io_msg))
   {
-    ROS_INFO_STREAM("Close gripper initialise :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+    ROS_INFO_STREAM("Close gripper initialise :  " << ((io_msg.response.success == 0) ? "Failed" : "Succeeded"));
     sleepSafeFor(robot_settle_time_);
     io_msg.request.state = 0;
-    if(client.call(io_msg))
+    if (client.call(io_msg))
     {
-      ROS_INFO_STREAM("Close gripper conclude :  " << ((io_msg.response.success==0)?"Failed":"Succeeded") );
+      ROS_INFO_STREAM("Close gripper conclude :  " << ((io_msg.response.success == 0) ? "Failed" : "Succeeded"));
       return true;
     }
     else
@@ -413,13 +405,13 @@ bool MoveitCustomApi::gripperClose(ros::NodeHandle nh)
 
 void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh, std::string prompts)
 {
-  user_prompts =  (prompts=="True"|| prompts=="true")? true : false;
+  user_prompts = (prompts == "True" || prompts == "true") ? true : false;
   failure_counter_ = 0;
   namespace rvt = rviz_visual_tools;
-  nh.param<std::string>("robot",robot_name_,"robot");
-  nh.param<std::string>("group_manip",group_manip_,"manipulator");
-  nh.param<int>("max_planning_attempts",max_trials,3);
-  nh.param<double>("robot_settle_time",robot_settle_time_,0.5);
+  nh.param<std::string>("robot", robot_name_, "robot");
+  nh.param<std::string>("group_manip", group_manip_, "manipulator");
+  nh.param<int>("max_planning_attempts", max_trials, 3);
+  nh.param<double>("robot_settle_time", robot_settle_time_, 0.5);
 
   move_group = new moveit::planning_interface::MoveGroupInterface(group_manip_);
   joint_model_group = move_group->getCurrentState()->getJointModelGroup(group_manip_);
@@ -443,13 +435,13 @@ void MoveitCustomApi::moveToNamedTarget(std::string target)
   int trials = 0;
   while (trials++ < max_trials)
   {
-    if(move_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
+    if (move_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS)
     {
       break;
     }
     else
     {
-     ROS_ERROR_STREAM("Named target planning failed, consider quitting");
+      ROS_ERROR_STREAM("Named target planning failed, consider quitting");
     }
   }
 
@@ -468,10 +460,11 @@ void MoveitCustomApi::moveToNamedTarget(std::string target)
 
 void MoveitCustomApi::executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label)
 {
-  int trial=0;
-  while(trial<max_trials)
+
+  int trial = 0;
+  while (trial < max_trials)
   {
-    if(moveGroupExecutePlan(getCartesianPathPlanToPose(target, label)))
+    if (moveGroupExecutePlan(getCartesianPathPlanToPose(target, label)))
     {
       return;
     }
@@ -491,34 +484,36 @@ void MoveitCustomApi::pickAtPoseFromHeight(geometry_msgs::Pose target_pose, doub
  */
 {
   // Make sure gripper is open
-   if (do_gripper)  gripperOpen(nh);
+  if (do_gripper)
+    gripperOpen(nh);
 
   // Go to a set height above given pose
-  target_pose.position.z+=height;
+  target_pose.position.z += height;
   geometry_msgs::Pose current_pose = move_group->getCurrentPose().pose;
 
-  if( comparePoses(current_pose, target_pose)  )
+  if (comparePoses(current_pose, target_pose))
   {
     ROS_INFO_STREAM("Poses same, skipping Pre Pick Pose");
   }
   else
   {
-    executeCartesianTrajtoPose(target_pose,"Pre Pick Pose");
+    executeCartesianTrajtoPose(target_pose, "Pre Pick Pose");
   }
   ROS_INFO("---------------------------");
   sleepSafeFor(robot_settle_time_);
 
   // Go down to reach and grasp the object
-  target_pose.position.z-=height;
-  executeCartesianTrajtoPose(target_pose,"Pick Pose");
-  if (do_gripper) gripperClose(nh);
+  target_pose.position.z -= height;
+  executeCartesianTrajtoPose(target_pose, "Pick Pose");
+  if (do_gripper)
+    gripperClose(nh);
   sleepSafeFor(robot_settle_time_);
-//  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
+  //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_ADD);
   ROS_INFO("---------------------------");
 
   // Go back up
-  target_pose.position.z+=height;
-  executeCartesianTrajtoPose(target_pose,"Post Pick Pose");
+  target_pose.position.z += height;
+  executeCartesianTrajtoPose(target_pose, "Post Pick Pose");
   ROS_INFO("---------------------------");
 }
 
@@ -530,25 +525,26 @@ void MoveitCustomApi::placeAtPoseFromHeight(geometry_msgs::Pose target_pose, dou
  */
 {
   // Go to a set height above given pose
-  target_pose.position.z+=height;
-  executeCartesianTrajtoPose(target_pose,"Pre Place Pose");
+  target_pose.position.z += height;
+  executeCartesianTrajtoPose(target_pose, "Pre Place Pose");
   ROS_INFO("---------------------------");
   sleepSafeFor(robot_settle_time_);
   // Go down and place the object
-  target_pose.position.z-=height;
-  executeCartesianTrajtoPose(target_pose,"Place Pose");
+  target_pose.position.z -= height;
+  executeCartesianTrajtoPose(target_pose, "Place Pose");
   ROS_INFO("---------------------------");
-  if (do_gripper) gripperOpen(nh);
+  if (do_gripper)
+    gripperOpen(nh);
   sleepSafeFor(robot_settle_time_);
-//  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
+  //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
-  target_pose.position.z+=height;
-  executeCartesianTrajtoPose(target_pose,"Post Place Pose");
+  target_pose.position.z += height;
+  executeCartesianTrajtoPose(target_pose, "Post Place Pose");
   ROS_INFO("---------------------------");
 }
 
-moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials=3, std::string display_name="target pose")
+moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials = 3, std::string display_name = "target pose")
 {
   namespace rvt = rviz_visual_tools;
   checkTrialsLimit(trials);
@@ -556,7 +552,7 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getPlanToP
   int trial = 0;
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
-  while(trial++ < trials)
+  while (trial++ < trials)
   {
     move_group->setPoseTarget(target_pose);
     plan_success = (move_group->plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
@@ -565,7 +561,7 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::getPlanToP
     visual_tools->publishText(text_pose, "Pose Goal", rvt::WHITE, rvt::XLARGE);
     visual_tools->publishTrajectoryLine(my_plan.trajectory_, joint_model_group);
     visual_tools->trigger();
-    ROS_INFO("Plan Attemp %d of %d : %s", trial, trials, plan_success? "SUCCESS" : "FAILED" );
+    ROS_INFO("Plan Attemp %d of %d : %s", trial, trials, plan_success ? "SUCCESS" : "FAILED");
     if (plan_success)
     {
       ROS_INFO_STREAM("Succeeded plan, continuing to execute");

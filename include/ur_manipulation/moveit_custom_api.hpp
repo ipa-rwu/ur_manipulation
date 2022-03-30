@@ -41,38 +41,35 @@ public:
   bool gripperClose(ros::NodeHandle nh);
   bool gripperOpen(ros::NodeHandle nh);
   moveit::planning_interface::MoveGroupInterface::Plan getPlanToPoseTarget(geometry_msgs::Pose target_pose, int trials, std::string display_name);
-  void initialiseMoveit(ros::NodeHandle nh, std::string prompts="true");
+  void initialiseMoveit(ros::NodeHandle nh, std::string prompts = "true");
   bool moveGroupExecutePlan(moveit::planning_interface::MoveGroupInterface::Plan my_plan);
   void moveToNamedTarget(std::string target);
-  void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper=true);
-  void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper=true);
+  void pickAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper = true);
+  void placeAtPoseFromHeight(geometry_msgs::Pose target_pose, double height, ros::NodeHandle nh, bool do_gripper = true);
   void printBasicInfo();
-  bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion=0.05, double delta_orientation=0.01);
-  moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step=0.01, double jump_threshold = 0.0);
+  bool comparePoses(geometry_msgs::Pose pose1, geometry_msgs::Pose pose2, double delta_posistion = 0.05, double delta_orientation = 0.01);
+  moveit::planning_interface::MoveGroupInterface::Plan getCartesianPathPlanToPose(geometry_msgs::Pose target_pose, std::string display_label, double eef_step = 0.01, double jump_threshold = 0.0);
   void sleepSafeFor(double duration);
-  void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef=0.001, double jump_thresh = 0.0);
+  void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef = 0.001, double jump_thresh = 0.0);
   void executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label);
   void adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory);
 
 private:
-
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-  const robot_state::JointModelGroup* joint_model_group ;
+  const robot_state::JointModelGroup *joint_model_group;
   moveit_visual_tools::MoveItVisualTools *visual_tools;
   Eigen::Isometry3d text_pose = Eigen::Isometry3d::Identity();
-  const int IO_SERVICE_FUN_LEVEL_ = 1;   // Not exactly sure what this is, but 1 seems to work. If it fails, try 2.
+  const int IO_SERVICE_FUN_LEVEL_ = 1; // Not exactly sure what this is, but 1 seems to work. If it fails, try 2.
   std::string robot_name_;
   std::string group_manip_;
   double robot_settle_time_;
 
-  const double BASE_OFFSET_FROM_BACK_WALL_ = 0.28;   //28cm
-  const double BASE_OFFSET_FROM_LEFT_WALL_ = 0.46;   //46cm
-  const double BASE_OFFSET_FROM_RIGHT_WALL_ = 0.5;   //50cm
-  const double TOTAL_INNER_CELL_Y_DIMENSION_ = 1.47; //1470cm
-  const double TOTAL_INNER_CELL_X_DIMENSION_ = 0.96; //960cm
-  const double TOTAL_INNER_CELL_Z_DIMENSION = 1.15;  //115cm
-
+  const double BASE_OFFSET_FROM_BACK_WALL_ = 0.28;   // 28cm
+  const double BASE_OFFSET_FROM_LEFT_WALL_ = 0.46;   // 46cm
+  const double BASE_OFFSET_FROM_RIGHT_WALL_ = 0.5;   // 50cm
+  const double TOTAL_INNER_CELL_Y_DIMENSION_ = 1.47; // 1470cm
+  const double TOTAL_INNER_CELL_X_DIMENSION_ = 0.96; // 960cm
+  const double TOTAL_INNER_CELL_Z_DIMENSION = 1.15;  // 115cm
 };
-
 
 #endif // MOVEIT_CUSTOM_API_HPP

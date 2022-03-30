@@ -45,7 +45,7 @@
 
 #include <moveit_visual_tools/moveit_visual_tools.h>
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "move_group_interface_tutorial");
   ros::NodeHandle node_handle;
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
 
   // Raw pointers are frequently used to refer to the planning group for improved performance.
-  const robot_state::JointModelGroup* joint_model_group =
+  const robot_state::JointModelGroup *joint_model_group =
       move_group.getCurrentState()->getJointModelGroup(PLANNING_GROUP);
 
   // Visualization
@@ -156,7 +156,7 @@ int main(int argc, char** argv)
 
   /* Uncomment below line when working with a real robot */
   /* move_group.move(); */
-    move_group.execute(my_plan);
+  move_group.execute(my_plan);
 
   // Planning to a joint-space goal
   // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -173,7 +173,7 @@ int main(int argc, char** argv)
   current_state->copyJointGroupPositions(joint_model_group, joint_group_positions);
 
   // Now, let's modify one of the joints, plan to the new joint space goal and visualize the plan.
-  joint_group_positions[0] = -1.0;  // radians
+  joint_group_positions[0] = -1.0; // radians
   move_group.setJointValueTarget(joint_group_positions);
 
   success = (move_group.plan(my_plan) == moveit::planning_interface::MoveItErrorCode::SUCCESS);
@@ -254,15 +254,15 @@ int main(int argc, char** argv)
   geometry_msgs::Pose target_pose3 = start_pose2;
 
   target_pose3.position.z -= 0.2;
-  waypoints.push_back(target_pose3);  // down
+  waypoints.push_back(target_pose3); // down
 
   target_pose3.position.y -= 0.2;
-  waypoints.push_back(target_pose3);  // right
+  waypoints.push_back(target_pose3); // right
 
   target_pose3.position.z += 0.2;
   target_pose3.position.y += 0.2;
   target_pose3.position.x -= 0.2;
-  waypoints.push_back(target_pose3);  // up and left
+  waypoints.push_back(target_pose3); // up and left
 
   // Cartesian motions are frequently needed to be slower for actions such as approach and retreat
   // grasp motions. Here we demonstrate how to reduce the speed of the robot arm via a scaling factor
