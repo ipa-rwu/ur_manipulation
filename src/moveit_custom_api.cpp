@@ -1,5 +1,5 @@
 /// TODO:
-/// [] Test the test piece collission object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
+/// [] Test the test piece collision object add/remove functionality more, including trajectories - Test object currently left nehind when the place operation is done. Fix this.
 
 #include "ur_manipulation/moveit_custom_api.hpp"
 
@@ -97,7 +97,6 @@ void MoveitCustomApi::
 
 void MoveitCustomApi::adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory)
 {
-
   std::vector<ros::Duration> times_from_start;
   times_from_start.resize(trajectory.joint_trajectory.points.size());
 
@@ -192,7 +191,7 @@ bool MoveitCustomApi::moveGroupExecutePlan(moveit::planning_interface::MoveGroup
   ;
 }
 
-void MoveitCustomApi::addCollissionObjects()
+void MoveitCustomApi::addCollisionObjects()
 {
   namespace rvt = rviz_visual_tools;
   moveit_msgs::AttachedCollisionObject object;
@@ -205,15 +204,15 @@ void MoveitCustomApi::addCollissionObjects()
   primitive.type = primitive.BOX;
   primitive.dimensions.resize(3);
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
-  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
+  primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
   primitive.dimensions[2] = 0;
 
   // Define a pose for the box (specified relative to frame_id)
   geometry_msgs::Pose box_pose;
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2; // Not perfectly symmetrical.
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;   // Base is ofset by (0.1470/2-.275)
-  box_pose.position.z = -0.01;                                                             // Push it slightly down to avoid collission with base plate.
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = BASE_OFFSET_FROM_BOTTOM_;
 
   // Since we are attaching the object to the robot base
   // we want the collision checker to ignore collisions between the object and the robot base
@@ -226,18 +225,18 @@ void MoveitCustomApi::addCollissionObjects()
   planning_scene.world.collision_objects.push_back(object.object);
 
   // The id of the object is used to identify it.
-  object.object.id = "Cieling";
+  object.object.id = "Ceiling";
 
   // Define a box to add to the world.
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
-  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
+  primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
   primitive.dimensions[2] = 0;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2; // Not perfectly symmetrical.
-  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;   // Base is ofset by (0.1470/2-.275)
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION_;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -249,14 +248,14 @@ void MoveitCustomApi::addCollissionObjects()
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
-  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
-  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
+  primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION_;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = BASE_OFFSET_FROM_RIGHT_WALL_;
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION_ / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -268,14 +267,14 @@ void MoveitCustomApi::addCollissionObjects()
 
   // Define a box to add to the world.
   primitive.dimensions[0] = 0;
-  primitive.dimensions[1] = TOTAL_INNER_CELL_Y_DIMENSION_;
-  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
+  primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION_;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -BASE_OFFSET_FROM_LEFT_WALL_;
   box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION_ / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -288,13 +287,28 @@ void MoveitCustomApi::addCollissionObjects()
   // Define a box to add to the world.
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
   primitive.dimensions[1] = 0;
-  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION;
+  primitive.dimensions[2] = TOTAL_INNER_CELL_Z_DIMENSION_;
 
   // Define a pose for the box (specified relative to frame_id
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2;
   box_pose.position.y = -BASE_OFFSET_FROM_BACK_WALL_;
-  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION / 2;
+  box_pose.position.z = TOTAL_INNER_CELL_Z_DIMENSION_ / 2;
+
+  object.object.operation = object.object.ADD;
+  object.object.primitives.push_back(primitive);
+  object.object.primitive_poses.push_back(box_pose);
+  planning_scene.world.collision_objects.push_back(object.object);
+
+  object.object.id = "Bottom";
+  primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
+  primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
+  primitive.dimensions[2] = BASE_OFFSET_FROM_BOTTOM_;
+
+  box_pose.orientation.w = 1.0;
+  box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2;
+  box_pose.position.y = TOTAL_INNER_CELL_Y_DIMENSION_ / 2 - BASE_OFFSET_FROM_BACK_WALL_;
+  box_pose.position.z = BASE_OFFSET_FROM_BOTTOM_ / 2;
 
   object.object.operation = object.object.ADD;
   object.object.primitives.push_back(primitive);
@@ -303,10 +317,10 @@ void MoveitCustomApi::addCollissionObjects()
 
   planning_scene.is_diff = true;
   planning_scene_diff_publisher.publish(planning_scene);
-  ROS_INFO_NAMED("seher_demo", "Adding collission objects into the world");
+  ROS_INFO_NAMED("seher_demo", "Adding collision objects into the world");
 }
 
-void MoveitCustomApi::addOrRemoveTestPieceCollissionObjectWRTRobot(std::string command)
+void MoveitCustomApi::addOrRemoveTestPieceCollisionObjectWRTRobot(std::string command)
 {
   if (command != COMMAND_ADD && command != COMMAND_REMOVE)
   {
@@ -426,9 +440,20 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh, std::string prompts)
   failure_counter_ = 0;
   namespace rvt = rviz_visual_tools;
   nh.param<std::string>("robot", robot_name_, "robot");
-  nh.param<std::string>("group_manip", group_manip_, "manipulator");
+  nh.param<std::string>("group_manip", group_manip_, "manip");
   nh.param<int>("max_planning_attempts", max_trials, 3);
   nh.param<double>("robot_settle_time", robot_settle_time_, 0.5);
+  // load parameters for collision objects
+  if (!(nh.getParam("collision/backwall", BASE_OFFSET_FROM_BACK_WALL_) ||
+        nh.getParam("collision/leftwall", BASE_OFFSET_FROM_LEFT_WALL_) ||
+        nh.getParam("collision/rightwall", BASE_OFFSET_FROM_RIGHT_WALL_) ||
+        nh.getParam("collision/bottom", BASE_OFFSET_FROM_BOTTOM_)))
+    ROS_ERROR("Collision object not set");
+  if (!(nh.getParam("cell/x_dim", TOTAL_INNER_CELL_X_DIMENSION_) ||
+        nh.getParam("cell/y_dim", TOTAL_INNER_CELL_Y_DIMENSION_) ||
+        nh.getParam("cell/z_dim", TOTAL_INNER_CELL_Z_DIMENSION_)))
+    ROS_ERROR("Cell dimension not set");
+
 
   move_group = new moveit::planning_interface::MoveGroupInterface(group_manip_);
   joint_model_group = move_group->getCurrentState()->getJointModelGroup(group_manip_);
@@ -560,7 +585,7 @@ void MoveitCustomApi::
   if (do_gripper)
     gripperOpen(nh);
   sleepSafeFor(robot_settle_time_);
-  //  addOrRemoveTestPieceCollissionObjectWRTRobot(COMMAND_REMOVE);
+  //  addOrRemoveTestPiececollisionObjectWRTRobot(COMMAND_REMOVE);
 
   // Go back up
   target_pose.position.z += height;

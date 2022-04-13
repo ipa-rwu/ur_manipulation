@@ -1,9 +1,14 @@
 <?xml version="1.0"?>
 <launch>
 
- <arg name="prompts" default="true" />
- <arg name="robot" default="ur5e" />
- <rosparam file="$(find ur_manipulation)/config/$(arg robot).yaml"/>
- <node name="seher_demo" pkg="ur_manipulation" type="seher_demo" respawn="false" output="screen" args="$(arg prompts)"/>
+ <arg name="prompts" default="false" />
+ <arg name="robot" default="ur_ros" />
+ <arg name="sim" default="true"/>
+
+ <rosparam file="$(find ur_manipulation)/config/sim_$(arg robot).yaml" if="$(arg sim)"/>
+ <rosparam file="$(find ur_manipulation)/config/$(arg robot).yaml" unless="$(arg sim)"/>
+
+ <node name="seher_demo" pkg="ur_manipulation" type="seher_demo"
+    respawn="false" output="screen" args="$(arg prompts) $(arg robot)"/>
  <node name="tool_pose_publisher" pkg ="ur_manipulation" type="tool_pose_publisher.py" output="screen"/>
 </launch>

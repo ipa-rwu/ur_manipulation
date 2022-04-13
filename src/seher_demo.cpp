@@ -12,9 +12,10 @@ int main(int argc, char **argv)
   ros::Publisher pub_fail = nh.advertise<std_msgs::Header>("/ur_manipulation/failure_counter", 1);
 
   MoveitCustomApi seher_obj(argv[1]);
+  std::string robot = argv[2];
   seher_obj.initialiseMoveit(nh);
   seher_obj.printBasicInfo();
-  seher_obj.addCollissionObjects();
+  seher_obj.addCollisionObjects();
   ROS_INFO("Moving to ready pose");
   seher_obj.moveToNamedTarget("ready");
   int seq = 0;

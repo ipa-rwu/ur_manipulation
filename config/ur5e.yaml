@@ -2,3 +2,39 @@ robot: ur5e
 group_manip: manipulator
 max_planning_attempts: 3
 robot_settle_time: 0.4
+socket_ip: "10.4.11.132"
+socket_port: 65432
+
+#location of buttons
+button1:
+  x: -0.107
+  y: 0.59
+  z: 0.035
+  R: 180
+  P: 0
+  Y: 0
+  frame: base_link
+
+button2:
+  x: 0.161
+  y: 0.59
+  z: 0.035
+  R: 180
+  P: 0
+  Y: 0
+  frame: base_link
+
+Collision:
+  # offset from wall to base [m]
+  backwall: 0.28
+  leftwall: 0.46
+  rightwall: 0.5
+  bottom: -0.01
+
+Cell:
+  # dimension of the working cell [m]
+  x_dim: 0.96
+  y_dim: 1.47
+  z_dim: 1.15
+
+pre_mash_height: 0.1  # height above the button for the pre/post mash poses

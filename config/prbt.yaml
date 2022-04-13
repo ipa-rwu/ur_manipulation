@@ -2,3 +2,39 @@ robot: prbt
 group_manip: manipulator
 max_planning_attempts: 4
 robot_settle_time: 0.4
+socket_ip: "10.4.11.132"
+socket_port: 65432
+
+#location of buttons
+button1:
+  x: 0.05
+  y: -0.45
+  z: 0.15
+  R: 180
+  P: 0
+  Y: 0
+  frame: world
+
+button2:
+  x: -0.1
+  y: -0.45
+  z: 0.15
+  R: 180
+  P: 0
+  Y: 0
+  frame: world
+
+collision:
+  # offset from wall to base [m]
+  backwall: -0.23
+  leftwall: 0.36
+  rightwall: 0.30
+  bottom: 0.07
+
+cell:
+  # dimension of the working cell [m]
+  x_dim: 0.66
+  y_dim: -1.10
+  z_dim: 1.13
+
+pre_mash_height: 0.05  # height above the button for the pre/post mash poses

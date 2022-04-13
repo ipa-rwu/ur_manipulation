@@ -16,6 +16,7 @@
 #include <angles/angles.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <iostream>
+#include <string>
 
 #include "ur_msgs/SetIO.h"
 
@@ -35,8 +36,8 @@ public:
   ros::Publisher planning_scene_diff_publisher;
   moveit::planning_interface::MoveGroupInterface *move_group;
 
-  void addCollissionObjects();
-  void addOrRemoveTestPieceCollissionObjectWRTRobot(std::string command);
+  void addCollisionObjects();
+  void addOrRemoveTestPieceCollisionObjectWRTRobot(std::string command);
   void checkTrialsLimit(int trials);
   bool gripperClose(ros::NodeHandle nh);
   bool gripperOpen(ros::NodeHandle nh);
@@ -64,12 +65,13 @@ private:
   std::string group_manip_;
   double robot_settle_time_;
 
-  const double BASE_OFFSET_FROM_BACK_WALL_ = 0.28;   // 28cm
-  const double BASE_OFFSET_FROM_LEFT_WALL_ = 0.46;   // 46cm
-  const double BASE_OFFSET_FROM_RIGHT_WALL_ = 0.5;   // 50cm
-  const double TOTAL_INNER_CELL_Y_DIMENSION_ = 1.47; // 1470cm
-  const double TOTAL_INNER_CELL_X_DIMENSION_ = 0.96; // 960cm
-  const double TOTAL_INNER_CELL_Z_DIMENSION = 1.15;  // 115cm
+  double BASE_OFFSET_FROM_BACK_WALL_;
+  double BASE_OFFSET_FROM_LEFT_WALL_;
+  double BASE_OFFSET_FROM_RIGHT_WALL_;
+  double BASE_OFFSET_FROM_BOTTOM_;
+  double TOTAL_INNER_CELL_Y_DIMENSION_;
+  double TOTAL_INNER_CELL_X_DIMENSION_;
+  double TOTAL_INNER_CELL_Z_DIMENSION_;
 };
 
 #endif // MOVEIT_CUSTOM_API_HPP
