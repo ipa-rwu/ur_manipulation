@@ -43,10 +43,6 @@ bool MoveitCustomApi::
                    double delta_posistion,
                    double delta_orientation)
 {
-  tf::Quaternion q1, q2;
-  tf::quaternionMsgToTF(pose1.orientation, q1);
-  tf::quaternionMsgToTF(pose2.orientation, q2);
-
   if (abs(pose1.position.x - pose2.position.x) <= delta_posistion &&
       abs(pose1.position.y - pose2.position.y) <= delta_posistion &&
       abs(pose1.position.z - pose2.position.z) <= delta_posistion &&
@@ -59,8 +55,13 @@ bool MoveitCustomApi::
   }
   else
   {
-    ROS_WARN_STREAM("Expected delty pos " << delta_posistion << " vs actual (" << abs(pose1.position.x - pose2.position.x) << ", " << abs(pose1.position.y - pose2.position.y) << ", " << abs(pose1.position.z - pose2.position.z) << ")");
-    ROS_WARN_STREAM("Expected delta ori " << delta_orientation << " vs actual " << tf::angleShortestPath(q1, q2));
+    tf::Quaternion q1, q2;
+    tf::quaternionMsgToTF(pose1.orientation, q1);
+    tf::quaternionMsgToTF(pose2.orientation, q2);
+    if (tf::angleShortestPath(q1, q2) == 0)
+    {
+      return true;
+    }
     return false;
   }
 }
