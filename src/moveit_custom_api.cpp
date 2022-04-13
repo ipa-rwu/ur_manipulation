@@ -144,9 +144,13 @@ getCartesianPathPlanToPose(geometry_msgs::Pose target_pose,
 {
   namespace rvt = rviz_visual_tools;
   move_group->setStartStateToCurrentState();
+
   std::vector<geometry_msgs::Pose> waypoints;
   waypoints.push_back(move_group->getCurrentPose().pose);
   waypoints.push_back(target_pose);
+
+  eef_step = 0.005;
+  jump_threshold = 0.0;
 
   moveit_msgs::RobotTrajectory trajectory;
   double fraction = 0.0;
@@ -155,6 +159,24 @@ getCartesianPathPlanToPose(geometry_msgs::Pose target_pose,
     fraction = move_group->computeCartesianPath(waypoints, eef_step, jump_threshold, trajectory);
   }
   adjustTrajectoryToFixTimeSequencing(trajectory);
+  // time parameterization params
+  robot_trajectory::RobotTrajectory r_traj(robot_model_, joint_model_group);
+  r_traj.setRobotTrajectoryMsg(*(move_group->getCurrentState()), trajectory);
+  double max_vel_scaling_factor = 0.5;
+  double max_acc_scaling_factor = 0.5;
+  // using time optimal trajectory generation, parameter chosen randomly
+  double path_tolerance = 0.1;
+  double resample_dt = 0.1;
+  double min_angle_change = 0.001;
+  trajectory_processing::TimeOptimalTrajectoryGeneration TOTG(path_tolerance, resample_dt, min_angle_change);
+  if (TOTG.computeTimeStamps(r_traj, max_vel_scaling_factor, max_acc_scaling_factor))
+  {
+    r_traj.getRobotTrajectoryMsg(trajectory);
+  }
+  else
+  {
+    ROS_WARN("TOTG parameterization failed.");
+  }
 
   // Visualize the plan in RViz
   ROS_INFO_STREAM("Visualizing Cartesian Path plan to " << display_label << " (" << fraction * 100 << "% acheived)");
@@ -166,6 +188,16 @@ getCartesianPathPlanToPose(geometry_msgs::Pose target_pose,
 
   moveit::planning_interface::MoveGroupInterface::Plan my_plan;
   my_plan.trajectory_ = trajectory;
+  // display trajectory with time parameterization
+  ros::NodeHandle nh_display = move_group->getNodeHandle();
+  ros::Publisher display_publisher =
+      nh_display.advertise<moveit_msgs::DisplayTrajectory>("move_group/display_planned_path", 1, true);
+  moveit_msgs::DisplayTrajectory display_traj;
+  display_traj.model_id = move_group->getRobotModel()->getName();
+  display_traj.trajectory_start = my_plan.start_state_;
+  display_traj.trajectory.push_back(trajectory);
+  display_publisher.publish(display_traj);
+
   return my_plan;
 }
 
@@ -454,6 +486,8 @@ void MoveitCustomApi::initialiseMoveit(ros::NodeHandle nh, std::string prompts)
         nh.getParam("cell/z_dim", TOTAL_INNER_CELL_Z_DIMENSION_)))
     ROS_ERROR("Cell dimension not set");
 
+  robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
+  robot_model_ = std::make_shared<moveit::core::RobotModel>(robot_model_loader.getURDF(), robot_model_loader.getSRDF());
 
   move_group = new moveit::planning_interface::MoveGroupInterface(group_manip_);
   joint_model_group = move_group->getCurrentState()->getJointModelGroup(group_manip_);

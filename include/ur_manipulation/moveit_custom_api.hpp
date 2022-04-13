@@ -11,6 +11,7 @@
 #include <moveit_msgs/AttachedCollisionObject.h>
 #include <moveit_msgs/CollisionObject.h>
 #include <moveit_visual_tools/moveit_visual_tools.h>
+#include <moveit/trajectory_processing/time_optimal_trajectory_generation.h>
 
 #include "tf/transform_datatypes.h"
 #include <angles/angles.h>
@@ -64,6 +65,7 @@ private:
   std::string robot_name_;
   std::string group_manip_;
   double robot_settle_time_;
+  moveit::core::RobotModelConstPtr robot_model_;
 
   double BASE_OFFSET_FROM_BACK_WALL_;
   double BASE_OFFSET_FROM_LEFT_WALL_;
