@@ -666,3 +666,20 @@ moveit::planning_interface::MoveGroupInterface::Plan MoveitCustomApi::
   }
   return my_plan;
 }
+
+void MoveitCustomApi::executePlanToPose(geometry_msgs::Pose target, std::string label)
+{
+  int trial = 0;
+  while (trial < max_trials)
+  {
+    if (moveGroupExecutePlan(getPlanToPoseTarget(target, 3, label)))
+    {
+      return;
+    }
+    ROS_ERROR_STREAM("Execution to " << label << " trial " << trial++ << " failed. Reattempting");
+    failure_counter_++;
+  }
+  ROS_ERROR_STREAM("Maxx execution attempts reached, aborting program");
+  ros::shutdown();
+  exit(-1);
+}

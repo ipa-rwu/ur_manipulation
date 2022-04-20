@@ -55,6 +55,7 @@ public:
   void executeCartesianTrajForWaypoints(std::vector<geometry_msgs::Pose> waypoints, double eef = 0.001, double jump_thresh = 0.0);
   void executeCartesianTrajtoPose(geometry_msgs::Pose target, std::string label);
   void adjustTrajectoryToFixTimeSequencing(moveit_msgs::RobotTrajectory &trajectory);
+  void executePlanToPose(geometry_msgs::Pose target, std::string label);
 
 private:
   moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
