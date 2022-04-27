@@ -7,7 +7,7 @@ This package provides only the control node and the gripper URDF for the demo.
 1. `universal_robots_ros_driver`
 This is the official ROS Industrial driver for the UR series.  
 `git clone https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git`
-Once cloned, follow all setup isntructions from this package and verify the robot driver is working. This should also instruct you to clone Fmauch's universal robots package.   
+Once cloned, follow all setup instructions from this package, including installing its dependencies, and verify the robot driver is working.
 
 2. `ur5e_egp50_moveit_config`
 This is the custom built MoveIt! config folder for the robot+gripper. Use master branch from :      
