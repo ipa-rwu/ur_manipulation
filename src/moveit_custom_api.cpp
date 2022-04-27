@@ -335,7 +335,7 @@ void MoveitCustomApi::addCollisionObjects()
   object.object.id = "Bottom";
   primitive.dimensions[0] = TOTAL_INNER_CELL_X_DIMENSION_;
   primitive.dimensions[1] = std::abs(TOTAL_INNER_CELL_Y_DIMENSION_);
-  primitive.dimensions[2] = BASE_OFFSET_FROM_BOTTOM_;
+  primitive.dimensions[2] = std::abs(BASE_OFFSET_FROM_BOTTOM_);
 
   box_pose.orientation.w = 1.0;
   box_pose.position.x = -(BASE_OFFSET_FROM_LEFT_WALL_ - BASE_OFFSET_FROM_RIGHT_WALL_) / 2;
