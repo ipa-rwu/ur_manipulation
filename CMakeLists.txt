@@ -38,6 +38,19 @@ set(THIS_PACKAGE_INCLUDE_DIRS
   doc/interactivity/include
 )
 
+include_directories(
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+
+include_directories(SYSTEM ${THIS_PACKAGE_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
+link_directories(${catkin_LIBRARY_DIRS})
+
+add_library(moveit_custom_api
+   src/moveit_custom_api.cpp
+ )
+add_dependencies(moveit_custom_api ${catkin_EXPORTED_TARGETS})
+target_link_libraries(moveit_custom_api ${catkin_LIBRARIES})
 catkin_package(
   LIBRARIES
     moveit_custom_api
@@ -53,21 +66,6 @@ catkin_package(
     EIGEN3
 )
 
-include_directories(
-  include
-  ${catkin_INCLUDE_DIRS}
-)
-
-include_directories(SYSTEM ${THIS_PACKAGE_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${EIGEN3_INCLUDE_DIRS})
-include_directories(${catkin_INCLUDE_DIRS})
-link_directories(${catkin_LIBRARY_DIRS})
-
-add_library(moveit_custom_api
-   src/moveit_custom_api.cpp
- )
-add_dependencies(moveit_custom_api ${catkin_EXPORTED_TARGETS})
-target_link_libraries(moveit_custom_api ${catkin_LIBRARIES})
-
 add_executable(move_group_interface_tutorial_ur src/move_group_interface_tutorial_ur.cpp)
 target_link_libraries(move_group_interface_tutorial_ur ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 install(TARGETS move_group_interface_tutorial_ur DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
@@ -81,3 +79,12 @@ add_executable(seher_demo src/seher_demo.cpp
                           src/moveit_custom_api.cpp
                           )
 target_link_libraries(seher_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+
+install(TARGETS moveit_custom_api
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
+
+install(DIRECTORY include/${PROJECT_NAME}/
+      DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+      PATTERN ".svn" EXCLUDE)
