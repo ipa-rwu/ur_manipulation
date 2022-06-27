@@ -52,8 +52,6 @@
     <run_depend>tf_conversions</run_depend>
     <run_depend>ur_msgs</run_depend>
     <run_depend>std_msgs</run_depend>
-
-
-
+    <run_depend>ur_description</run_depend>
 
 </package>
