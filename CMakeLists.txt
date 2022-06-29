@@ -80,6 +80,7 @@ add_executable(seher_demo src/seher_demo.cpp
                           src/moveit_custom_api.cpp
                           )
 target_link_libraries(seher_demo ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+install(TARGETS seher_demo DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 install(TARGETS moveit_custom_api
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
