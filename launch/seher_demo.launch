@@ -5,7 +5,7 @@
  <arg name="robot" default="ur_ros" />
  <arg name="sim" default="true"/>
 
- <rosparam file="$(find ur_manipulation)/config/sim_$(arg robot).yaml" if="$(arg sim)"/>
+ <rosparam file="$(find ur_manipulation)/config/ur5e.yaml" if="$(arg sim)"/>
  <rosparam file="$(find ur_manipulation)/config/$(arg robot).yaml" unless="$(arg sim)"/>
 
  <node name="seher_demo" pkg="ur_manipulation" type="seher_demo"
