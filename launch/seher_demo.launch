@@ -10,5 +10,5 @@
 
  <node name="seher_demo" pkg="ur_manipulation" type="seher_demo"
     respawn="false" output="screen" args="$(arg prompts) $(arg robot)"/>
- <node name="tool_pose_publisher" pkg ="ur_manipulation" type="tool_pose_publisher.py" output="screen"/>
+ <!-- <node name="tool_pose_publisher" pkg ="ur_manipulation" type="tool_pose_publisher.py" output="screen"/> -->
 </launch>
